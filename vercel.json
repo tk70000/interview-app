@@ -1,0 +1,13 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/cleanup-sessions",
+      "schedule": "*/30 * * * *"
+    }
+  ],
+  "functions": {
+    "src/app/api/v1/chat/[sessionId]/stream/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}
