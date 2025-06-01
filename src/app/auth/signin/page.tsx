@@ -36,7 +36,10 @@ export default function SignInPage() {
         account => account.email === email && account.password === password
       )
 
-      if (process.env.NODE_ENV === 'development' && isTestAccount) {
+      // 開発環境またはDISABLE_AUTHが有効な場合
+      const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true'
+      
+      if (isDevelopment && isTestAccount) {
         // 開発環境でテストアカウントの場合は、認証をスキップ
         localStorage.setItem('isAuthenticated', 'true')
         localStorage.setItem('userEmail', email)
@@ -137,7 +140,7 @@ export default function SignInPage() {
         </Card>
 
         {/* 開発環境でのテストアカウント情報 */}
-        {process.env.NODE_ENV === 'development' && (
+        {(process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true') && (
           <Card className="mt-4">
             <CardHeader>
               <CardTitle className="text-lg">テストアカウント</CardTitle>

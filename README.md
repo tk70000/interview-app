@@ -54,6 +54,9 @@ cp .env.local.example .env.local
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabaseの匿名キー
 - `SUPABASE_SERVICE_ROLE_KEY`: SupabaseのService Roleキー
 - `OPENAI_API_KEY`: OpenAI APIキー
+- `GITHUB_CLIENT_ID`: GitHub OAuth AppのClient ID
+- `GITHUB_CLIENT_SECRET`: GitHub OAuth AppのClient Secret
+- `NEXT_PUBLIC_APP_URL`: アプリケーションのURL（デフォルト: http://localhost:3000）
 
 ### 4. Supabaseのセットアップ
 
@@ -86,10 +89,41 @@ npm run dev
 3. 個別の面談内容を詳細に閲覧
 4. 必要に応じてデータをエクスポート
 
+## 🔗 GitHub統合
+
+### GitHub OAuth Appの設定
+
+1. [GitHub Developer Settings](https://github.com/settings/developers)にアクセス
+2. 「New OAuth App」をクリック
+3. 以下の情報を入力：
+   - Application name: Interview App
+   - Homepage URL: http://localhost:3000（本番環境では実際のURL）
+   - Authorization callback URL: http://localhost:3000/api/auth/github/callback
+4. Client IDとClient Secretを環境変数に設定
+
+### GitHub連携機能
+
+- **リポジトリアクセス**: ユーザーのGitHubリポジトリを閲覧・管理
+- **イシュー作成**: 面談内容に基づいたタスクをGitHub Issuesに作成
+- **PR作成**: コード変更の提案をPull Requestとして作成
+- **Actions連携**: CI/CDワークフローの実行とモニタリング
+
+### 利用可能なAPIエンドポイント
+
+- `GET /api/auth/github` - GitHub OAuth認証開始
+- `GET /api/v1/github/repositories` - リポジトリ一覧取得
+- `GET /api/v1/github/workflows` - ワークフロー実行履歴取得
+- `POST /api/v1/github/workflows` - ワークフロー手動実行
+
 ## 🏗 プロジェクト構造
 
 ```
 interview_app/
+├── .github/
+│   └── workflows/           # GitHub Actions ワークフロー
+│       ├── ci.yml          # CI/テスト
+│       ├── deploy.yml      # デプロイ
+│       └── codeql.yml      # セキュリティ分析
 ├── src/
 │   ├── app/                  # Next.js App Router
 │   │   ├── api/             # API Routes

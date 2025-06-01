@@ -6,15 +6,6 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Server-side用のクライアント（Service Role Key使用）
-export const getServiceSupabase = () => {
-  const supabaseServiceKey = process.env.SERVICE_KEY
-  if (!supabaseServiceKey) {
-    throw new Error('SERVICE_KEY is not set')
-  }
-  return createClient(supabaseUrl, supabaseServiceKey)
-}
-
 // Database型定義
 export type Database = {
   public: {
@@ -118,6 +109,38 @@ export type Database = {
           message_id?: string
           vector?: number[]
           created_at?: string
+        }
+      }
+      github_connections: {
+        Row: {
+          id: string
+          user_id: string
+          github_token: string
+          github_username: string | null
+          scopes: string[] | null
+          expires_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          github_token: string
+          github_username?: string | null
+          scopes?: string[] | null
+          expires_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          github_token?: string
+          github_username?: string | null
+          scopes?: string[] | null
+          expires_at?: string | null
+          created_at?: string
+          updated_at?: string
         }
       }
     }

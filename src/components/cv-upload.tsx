@@ -8,8 +8,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { 
   SUPPORTED_FILE_TYPES, 
   MAX_FILE_SIZE, 
-  validateFile
-} from '@/lib/file-utils'
+  validateFileClient as validateFile
+} from '@/lib/file-constants'
 import { cn, formatFileSize } from '@/lib/utils'
 
 interface CVUploadProps {

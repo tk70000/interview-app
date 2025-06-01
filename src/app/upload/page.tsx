@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { CVUpload } from '@/components/cv-upload'
 import { Spinner } from '@/components/ui/spinner'
 import { getErrorMessage } from '@/lib/utils'
+import { GitHubConnectButton } from '@/components/github-connect-button'
 
 export default function UploadPage() {
   const router = useRouter()
@@ -119,9 +120,24 @@ export default function UploadPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* ログイン中のユーザー情報を表示 */}
               {userEmail && (
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">ログイン中のアカウント</p>
-                  <p className="font-medium">{userEmail}</p>
+                <div className="space-y-4">
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm text-muted-foreground">ログイン中のアカウント</p>
+                    <p className="font-medium">{userEmail}</p>
+                  </div>
+                  
+                  {/* GitHub連携セクション */}
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">GitHub連携</p>
+                        <p className="text-sm text-muted-foreground">
+                          リポジトリ情報をキャリア相談に活用できます
+                        </p>
+                      </div>
+                      <GitHubConnectButton />
+                    </div>
+                  </div>
                 </div>
               )}
 

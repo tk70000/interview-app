@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useInterval } from './useInterval'
 import { supabase } from '@/lib/supabase'
 import { Session } from '@/types'
@@ -51,12 +51,29 @@ export function useSession(sessionId: string | null): UseSessionState {
     }
   }, session?.status === 'active' ? 1000 : null)
 
+  // セッション終了
+  const endSession = useCallback(async (status: 'completed' | 'timeout' = 'completed') => {
+    if (!sessionId) return
+
+    const { error } = await supabase
+      .from('sessions')
+      .update({ 
+        status,
+        ended_at: new Date().toISOString() 
+      })
+      .eq('id', sessionId)
+
+    if (!error && session) {
+      setSession({ ...session, status, ended_at: new Date().toISOString() })
+    }
+  }, [sessionId, session])
+
   // タイムアウト処理
   useEffect(() => {
     if (timeRemaining === 0 && session?.status === 'active') {
       endSession('timeout')
     }
-  }, [timeRemaining, session])
+  }, [timeRemaining, session, endSession])
 
   // セッション延長
   const extendSession = async () => {
@@ -70,23 +87,6 @@ export function useSession(sessionId: string | null): UseSessionState {
 
     if (!error) {
       setTimeRemaining(SESSION_TIMEOUT_MINUTES * 60)
-    }
-  }
-
-  // セッション終了
-  const endSession = async (status: 'completed' | 'timeout' = 'completed') => {
-    if (!sessionId) return
-
-    const { error } = await supabase
-      .from('sessions')
-      .update({ 
-        status,
-        ended_at: new Date().toISOString() 
-      })
-      .eq('id', sessionId)
-
-    if (!error && session) {
-      setSession({ ...session, status, ended_at: new Date().toISOString() })
     }
   }
 

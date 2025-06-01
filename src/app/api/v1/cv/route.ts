@@ -3,7 +3,7 @@ import { generateId, getErrorMessage } from '@/lib/utils'
 import { uploadFile, validateFile } from '@/lib/file-utils'
 import { extractTextFromFile } from '@/lib/server-utils'
 import { generateCVSummary, generateInitialQuestions } from '@/lib/openai'
-import { getServiceSupabase } from '@/lib/supabase'
+import { getServiceSupabase } from '@/lib/supabase-server'
 import { CVUploadResponse } from '@/types'
 
 export async function POST(request: NextRequest) {

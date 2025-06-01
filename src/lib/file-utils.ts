@@ -1,14 +1,8 @@
-import { getServiceSupabase } from './supabase'
+import { getServiceSupabase } from './supabase-server'
+import { SUPPORTED_FILE_TYPES, MAX_FILE_SIZE } from './file-constants'
 
-// サポートされるファイルタイプ
-export const SUPPORTED_FILE_TYPES = {
-  'application/pdf': ['.pdf'],
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-  'application/msword': ['.doc'],
-  'application/json': ['.json'], // LinkedIn JSON
-}
-
-export const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+// Re-export constants for backward compatibility
+export { SUPPORTED_FILE_TYPES, MAX_FILE_SIZE }
 
 // ファイルバリデーション
 export function validateFile(file: File): { valid: boolean; error?: string } {
