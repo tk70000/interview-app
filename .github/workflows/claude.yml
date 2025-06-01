@@ -1,0 +1,22 @@
+name: Claude Code Action
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write        # push, PR 作成
+  pull-requests: write
+  actions: read
+
+jobs:
+  claude:
+    if: contains(github.event.comment.body, '@claude')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@v1
+        with:
+          model: claude-4-sonnet                # ← ここを変更
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
