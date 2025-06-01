@@ -28,6 +28,11 @@ export async function GET(request: NextRequest) {
     }
     
     const tokenData = await exchangeCodeForToken(code);
+    console.log('Token exchange successful:', { 
+      hasToken: !!tokenData.token,
+      scopes: tokenData.scopes,
+      userId 
+    });
     
     // Supabaseクライアントの作成（テストモードでも必要）
     const supabase = isTestMode ? getServiceSupabase() : await createClient();
@@ -47,8 +52,13 @@ export async function GET(request: NextRequest) {
       });
     
     if (upsertError) {
-      console.error('Error saving GitHub connection:', upsertError);
-      return NextResponse.redirect(new URL('/dashboard?error=connection_failed', request.url));
+      console.error('Error saving GitHub connection:', {
+        error: upsertError,
+        userId,
+        table: 'github_connections',
+        isTestMode
+      });
+      return NextResponse.redirect(new URL('/dashboard?error=connection_failed&details=' + encodeURIComponent(upsertError.message), request.url));
     }
     
     return NextResponse.redirect(new URL(returnTo + '?github=connected', request.url));

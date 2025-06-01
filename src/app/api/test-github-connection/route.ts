@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const supabase = isTestMode ? getServiceSupabase() : await createClient();
     
     // テストモードでは固定のユーザーID
-    const userId = isTestMode ? 'test-user-id' : null;
+    const userId = isTestMode ? '00000000-0000-0000-0000-000000000000' : null;
     
     // GitHub接続情報を取得
     const { data: connection, error } = await supabase

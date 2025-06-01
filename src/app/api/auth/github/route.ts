@@ -21,8 +21,8 @@ export async function GET(request: NextRequest) {
     }
     userId = user.id;
   } else {
-    // テストモードでは仮のユーザーIDを使用
-    userId = 'test-user-id';
+    // テストモードでは固定のUUIDを使用
+    userId = '00000000-0000-0000-0000-000000000000';
   }
   
   const state = Buffer.from(JSON.stringify({

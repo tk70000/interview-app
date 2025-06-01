@@ -5,5 +5,5 @@ export function isAuthDisabled(): boolean {
 
 // テスト用のユーザーID
 export function getTestUserId(): string {
-  return 'test-user-id'
+  return '00000000-0000-0000-0000-000000000000'
 }

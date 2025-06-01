@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { createClient, getServiceSupabase } from '@/lib/supabase-server';
 import { getWorkflowRuns, triggerWorkflow } from '@/lib/github';
 
 export async function GET(request: NextRequest) {
@@ -13,17 +13,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing owner or repo parameter' }, { status: 400 });
     }
     
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const isTestMode = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
     
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    let userId: string;
+    let supabase: any;
+    
+    if (!isTestMode) {
+      supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      userId = user.id;
+    } else {
+      supabase = getServiceSupabase();
+      userId = '00000000-0000-0000-0000-000000000000';
     }
     
     const { data: connection, error: connectionError } = await supabase
       .from('github_connections')
       .select('github_token')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
     
     if (connectionError || !connection) {
@@ -71,17 +82,28 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const isTestMode = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
     
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    let userId: string;
+    let supabase: any;
+    
+    if (!isTestMode) {
+      supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      userId = user.id;
+    } else {
+      supabase = getServiceSupabase();
+      userId = '00000000-0000-0000-0000-000000000000';
     }
     
     const { data: connection, error: connectionError } = await supabase
       .from('github_connections')
       .select('github_token')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
     
     if (connectionError || !connection) {
