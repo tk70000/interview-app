@@ -35,7 +35,7 @@ jobs:
         echo "Message: ${{ github.event.inputs.message }}" >> test-output/test-result.txt
     
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-results
         path: test-output/
