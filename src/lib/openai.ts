@@ -42,7 +42,7 @@ export async function generateCVSummary(cvText: string): Promise<string> {
     console.log('OpenAI client created successfully');
     
     const response = await client.chat.completions.create({
-      model: 'gpt-4.1',
+      model: 'gpt-4o-mini', // 一時的に安価なモデルを使用
       messages: [
         {
           role: 'system',
@@ -62,17 +62,24 @@ export async function generateCVSummary(cvText: string): Promise<string> {
       throw new Error('OpenAI APIからの応答が空です');
     }
     
+    console.log('生成されたCV要約:', content);
     return content;
   } catch (error: any) {
     console.error('CV要約生成エラー詳細:', {
       message: error.message,
       status: error.response?.status,
       statusText: error.response?.statusText,
+      headers: error.response?.headers,
       error: error.error,
       type: error.type,
+      code: error.code,
+      fullError: error
     })
     
     // OpenAI specific error handling
+    if (error.status === 404) {
+      throw new Error(`モデル 'gpt-4.1' にアクセスできません。利用可能なモデルを確認してください。`)
+    }
     if (error.status === 401 || error.code === 'invalid_api_key') {
       throw new Error('OpenAI APIキーが無効です。正しいキーか確認してください。')
     }
@@ -92,16 +99,37 @@ export async function generateInitialQuestions(
   cvSummary: string,
   jobDescription?: string
 ): Promise<string[]> {
-  try {
-    const response = await getOpenAIClient().chat.completions.create({
-      model: 'gpt-4.1',
+  const maxRetries = 3
+  let lastError: any
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log('=== generateInitialQuestions ===')
+      console.log(`試行 ${attempt}/${maxRetries}`)
+      console.log('入力されたCV要約:', cvSummary)
+      console.log('職種指定:', jobDescription || '指定なし')
+      
+      const response = await getOpenAIClient().chat.completions.create({
+      model: 'gpt-4o-mini', // 一時的に安価なモデルを使用
       messages: [
         {
           role: 'system',
           content: `あなたは優秀なキャリアアドバイザーです。
-候補者とテンポよく会話を進めるため、短く答えやすい質問を作成してください。
+${cvSummary.includes('読み込むことができませんでした') 
+  ? `候補者の職務経歴書を読み込むことができなかったため、一般的なキャリア相談として以下のような質問を作成してください：
+- 現在のお仕事内容について
+- これまでのキャリアの概要
+- 得意分野やスキル
+- 今後のキャリアの方向性
+- 転職を検討している理由
+など、候補者の経歴を理解するための基本的な質問` 
+  : `候補者の職務経歴書の内容に基づいて、その人の経験や専門分野に特化した質問を作成してください。
 
 重要なルール：
+- 候補者の実際の職歴・専門分野に関連する質問のみを作成する
+- 職務経歴書に記載されていない分野の質問は作成しない
+- 記載されている具体的な技術、プロジェクト、役割に基づいた質問を作成する`}
+
 - 1つの質問は1〜2文以内
 - 具体的で答えやすい内容
 - 「はい/いいえ」で終わらない開かれた質問
@@ -120,17 +148,55 @@ export async function generateInitialQuestions(
     })
 
     const content = response.choices[0].message.content || ''
+    console.log('OpenAIからの生の回答:', content)
+    
     // 質問を行ごとに分割して配列化
     const questions = content.split('\n')
       .filter(line => line.trim())
       .map(line => line.replace(/^\d+\.\s*/, '').trim())
       .filter(q => q.length > 10)
 
-    return questions.slice(0, 7)
-  } catch (error) {
-    console.error('初回質問生成エラー:', error)
-    throw new Error('質問の生成に失敗しました')
+      console.log('解析後の質問配列:', questions)
+      return questions.slice(0, 7)
+    } catch (error: any) {
+      lastError = error
+      console.error(`初回質問生成エラー (試行 ${attempt}/${maxRetries}):`, {
+        message: error.message,
+        status: error.status,
+        statusText: error.response?.statusText,
+        headers: error.response?.headers,
+        error: error.error,
+        type: error.type,
+        code: error.code,
+        fullError: error
+      })
+      
+      // レート制限エラーの場合はリトライ
+      if (error.status === 429 && attempt < maxRetries) {
+        const waitTime = Math.pow(2, attempt) * 1000 // 指数バックオフ: 2秒, 4秒, 8秒
+        console.log(`レート制限エラー。${waitTime}ms待機して再試行します...`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+        continue
+      }
+      
+      // その他のエラーは即座に投げる
+      break
+    }
   }
+  
+  // すべての試行が失敗した場合
+  // OpenAI API特有のエラーハンドリング
+  if (lastError.status === 404) {
+    throw new Error(`モデル 'gpt-4.1' にアクセスできません。利用可能なモデルを確認してください。`)
+  }
+  if (lastError.status === 401) {
+    throw new Error('OpenAI APIキーが無効です。')
+  }
+  if (lastError.status === 429) {
+    throw new Error('OpenAI APIのレート制限に達しました。しばらく待ってから再度お試しください。')
+  }
+  // 詳細なエラー情報を含めて投げる
+  throw new Error(`質問の生成に失敗しました: ${lastError.message || 'Unknown error'}`)
 }
 
 // フォローアップ質問生成
@@ -141,7 +207,7 @@ export async function generateFollowUpQuestion(
 ): Promise<{ question: string; shouldAskFollowUp: boolean }> {
   try {
     const response = await getOpenAIClient().chat.completions.create({
-      model: 'gpt-4.1',
+      model: 'gpt-4o-mini', // 一時的に安価なモデルを使用
       messages: [
         {
           role: 'system',
@@ -204,7 +270,7 @@ export async function* streamChatResponse(
       : 'あなたは親切で専門的なキャリアアドバイザーです。候補者の話を傾聴し、適切な質問と洞察的なフィードバックを提供します。'
 
     const stream = await getOpenAIClient().chat.completions.create({
-      model: 'gpt-4.1',
+      model: 'gpt-4o-mini', // 一時的に安価なモデルを使用
       messages: [
         { role: 'system', content: systemMessage },
         ...messages

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateId, getErrorMessage } from '@/lib/utils'
-import { uploadFile, extractTextFromFile, validateFile } from '@/lib/file-utils'
+import { uploadFile, validateFile } from '@/lib/file-utils'
+import { extractTextFromFile } from '@/lib/server-utils'
 import { generateCVSummary, generateInitialQuestions } from '@/lib/openai'
 import { getServiceSupabase } from '@/lib/supabase'
 import { CVUploadResponse } from '@/types'
@@ -113,9 +114,23 @@ export async function POST(request: NextRequest) {
         throw uploadError
       }
 
-      // テキスト抽出
-      const cvText = await extractTextFromFile(cvUrl, file.type)
-      console.log('CV text extracted, length:', cvText.length)
+      // テキスト抽出（アップロードされたファイルから直接）
+      console.log('ファイルからテキスト抽出開始...')
+      const arrayBuffer = await file.arrayBuffer()
+      const base64 = Buffer.from(arrayBuffer).toString('base64')
+      const dataUrl = `data:${file.type};base64,${base64}`
+      
+      let cvText: string
+      let isTextExtractionSuccessful = true
+      
+      try {
+        cvText = await extractTextFromFile(dataUrl, file.type)
+        console.log('CV text extracted, length:', cvText.length)
+      } catch (extractError) {
+        console.error('テキスト抽出に失敗しました:', extractError)
+        isTextExtractionSuccessful = false
+        cvText = 'CVの内容を読み込むことができませんでした。'
+      }
 
       // CV要約を生成
       console.log('Attempting to generate CV summary...')
@@ -123,20 +138,35 @@ export async function POST(request: NextRequest) {
       console.log('OpenAI API key length:', process.env.OPENAI_API_KEY?.length)
       
       let cvSummary: string
-      try {
-        cvSummary = await generateCVSummary(cvText)
-        console.log('CV summary generated successfully')
-      } catch (openaiError: any) {
-        console.error('OpenAI API Error:', {
-          message: openaiError.message,
-          status: openaiError.status,
-          code: openaiError.code,
-        })
-        throw new Error(`AI処理エラー: ${openaiError.message}`)
+      let initialQuestions: string[]
+      
+      if (isTextExtractionSuccessful) {
+        // テキスト抽出が成功した場合、通常通り処理
+        try {
+          cvSummary = await generateCVSummary(cvText)
+          console.log('CV summary generated successfully')
+        } catch (openaiError: any) {
+          console.error('OpenAI API Error:', {
+            message: openaiError.message,
+            status: openaiError.status,
+            code: openaiError.code,
+          })
+          throw new Error(`AI処理エラー: ${openaiError.message}`)
+        }
+        
+        // 初回質問を生成
+        initialQuestions = await generateInitialQuestions(cvSummary)
+      } else {
+        // テキスト抽出が失敗した場合、一般的な質問を生成
+        console.log('CVが読み込めなかったため、一般的な質問を生成します。')
+        cvSummary = 'CVの内容を読み込むことができませんでした。候補者の経歴について直接お聞きします。'
+        
+        // 一般的なキャリア相談の質問を生成
+        initialQuestions = await generateInitialQuestions(
+          '候補者の職務経歴書を読み込むことができませんでした。',
+          '一般的なキャリア相談'
+        )
       }
-
-      // 初回質問を生成
-      const initialQuestions = await generateInitialQuestions(cvSummary)
 
       // 候補者情報を更新
       const { error: updateError } = await supabase

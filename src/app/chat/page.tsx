@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Info } from 'lucide-react'
+import { ArrowLeft, Info, CheckCircle, UserCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChatInterface } from '@/components/chat-interface'
@@ -18,6 +18,9 @@ function ChatPage() {
   const [streamingContent, setStreamingContent] = useState('')
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [showSummary, setShowSummary] = useState(false)
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
+  const [summary, setSummary] = useState('')
   const eventSourceRef = useRef<EventSource | null>(null)
   const streamingContentRef = useRef<string>('')
 
@@ -38,11 +41,22 @@ function ChatPage() {
     if (initialQuestions) {
       try {
         const questions = JSON.parse(initialQuestions)
+        let introMessage = `こんにちは、${candidateName}さん。\n`
+        
+        // CV要約をチェックして、読み込みエラーかどうか判定
+        if (questions.some((q: string) => q.includes('お仕事内容') || q.includes('キャリアの概要'))) {
+          introMessage += 'CVの読み込みができなかったため、直接お話を伺いながら進めさせていただきます。\n'
+        } else {
+          introMessage += 'CVを拝見させていただきました。'
+        }
+        
+        introMessage += `いくつか質問させていただきます。\n\n${questions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n\n')}\n\nまずは最初の質問からお答えください。`
+        
         const welcomeMessage: Message = {
           id: generateId(),
           session_id: storedSessionId,
           role: 'assistant',
-          content: `こんにちは、${candidateName}さん。\nCVを拝見させていただきました。いくつか質問させていただきます。\n\n${questions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n\n')}\n\nまずは最初の質問からお答えください。`,
+          content: introMessage,
           created_at: new Date().toISOString(),
         }
         setMessages([welcomeMessage])
@@ -157,6 +171,40 @@ function ChatPage() {
     }
   }
 
+  const handleEndConsultation = async () => {
+    setIsGeneratingSummary(true)
+    setError('')
+
+    try {
+      // メッセージ履歴からキャリアサマリーを生成
+      const response = await fetch('/api/v1/chat/summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: messages,
+          sessionId: sessionId,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('サマリーの生成に失敗しました')
+      }
+
+      const data = await response.json()
+      setSummary(data.summary)
+      setShowSummary(true)
+    } catch (error) {
+      setError('キャリアサマリーの生成に失敗しました')
+    } finally {
+      setIsGeneratingSummary(false)
+    }
+  }
+
+  // メッセージの往復回数をカウント（ユーザーのメッセージ数）
+  const userMessageCount = messages.filter(m => m.role === 'user').length
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -169,32 +217,70 @@ function ChatPage() {
             ホームへ
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-          >
-            <Info className="mr-2 h-4 w-4" />
-            セッション情報
-          </Button>
+          <div className="flex gap-2">
+            {userMessageCount >= 3 && !showSummary && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEndConsultation}
+                disabled={isGeneratingSummary}
+              >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                {isGeneratingSummary ? '生成中...' : '相談を終了'}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+            >
+              <UserCircle className="mr-2 h-4 w-4" />
+              キャリアアドバイザー
+            </Button>
+          </div>
         </div>
 
-        <Card className="h-[calc(100vh-120px)]">
-          <CardHeader>
-            <CardTitle>キャリア相談チャット</CardTitle>
-            <CardDescription>
-              AIカウンセラーがあなたのキャリアについて詳しくお聞きします
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="h-[calc(100%-100px)] p-0">
-            <ChatInterface
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              isLoading={isLoading}
-              isStreaming={isStreaming}
-              streamingContent={streamingContent}
-            />
-          </CardContent>
-        </Card>
+        {showSummary ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>キャリア相談サマリー</CardTitle>
+              <CardDescription>
+                これまでの会話から、あなたのキャリアの方向性をまとめました
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="prose prose-sm max-w-none">
+                <div className="whitespace-pre-wrap">{summary}</div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button onClick={() => router.push('/')}>
+                  ホームへ戻る
+                </Button>
+                <Button variant="outline" onClick={() => setShowSummary(false)}>
+                  チャットに戻る
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="h-[calc(100vh-120px)]">
+            <CardHeader>
+              <CardTitle>キャリア相談チャット</CardTitle>
+              <CardDescription>
+                AIカウンセラーがあなたのキャリアについて詳しくお聞きします
+                {userMessageCount < 3 && ` (あと${3 - userMessageCount}回の会話が必要です)`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[calc(100%-100px)] p-0">
+              <ChatInterface
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                isLoading={isLoading}
+                isStreaming={isStreaming}
+                streamingContent={streamingContent}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {error && (
           <div className="mt-4 p-4 bg-destructive/10 text-destructive rounded-lg">

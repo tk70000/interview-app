@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,8 +16,25 @@ export default function UploadPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [candidateName, setCandidateName] = useState('')
-  const [candidateEmail, setCandidateEmail] = useState('')
+  const [userEmail, setUserEmail] = useState('')
+  const [userName, setUserName] = useState('')
+
+  useEffect(() => {
+    // ユーザー情報を取得
+    const email = localStorage.getItem('userEmail')
+    if (!email) {
+      // ログインしていない場合はサインインページへ
+      router.push('/auth/signin')
+      return
+    }
+    
+    setUserEmail(email)
+    // メールアドレスから名前を推測（@マーク前の部分）
+    const nameFromEmail = email.split('@')[0]
+      .replace(/[._-]/g, ' ')
+      .replace(/\b\w/g, char => char.toUpperCase())
+    setUserName(nameFromEmail)
+  }, [router])
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file)
@@ -27,8 +44,14 @@ export default function UploadPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!selectedFile || !candidateName || !candidateEmail) {
-      setError('すべての項目を入力してください')
+    if (!selectedFile) {
+      setError('ファイルを選択してください')
+      return
+    }
+
+    if (!userEmail) {
+      setError('ログインが必要です')
+      router.push('/auth/signin')
       return
     }
 
@@ -38,8 +61,8 @@ export default function UploadPage() {
     try {
       const formData = new FormData()
       formData.append('file', selectedFile)
-      formData.append('name', candidateName)
-      formData.append('email', candidateEmail)
+      formData.append('name', userName)
+      formData.append('email', userEmail)
 
       const response = await fetch('/api/v1/cv', {
         method: 'POST',
@@ -55,8 +78,8 @@ export default function UploadPage() {
       // セッション情報をローカルストレージに保存
       if (data.sessionId) {
         localStorage.setItem('currentSessionId', data.sessionId)
-        localStorage.setItem('candidateName', candidateName)
-        localStorage.setItem('candidateEmail', candidateEmail)
+        localStorage.setItem('candidateName', userName)
+        localStorage.setItem('candidateEmail', userEmail)
         
         // 初回質問も保存
         if (data.initial_questions) {
@@ -94,33 +117,13 @@ export default function UploadPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">お名前 *</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    value={candidateName}
-                    onChange={(e) => setCandidateName(e.target.value)}
-                    placeholder="山田 太郎"
-                    required
-                    disabled={isUploading}
-                  />
+              {/* ログイン中のユーザー情報を表示 */}
+              {userEmail && (
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">ログイン中のアカウント</p>
+                  <p className="font-medium">{userEmail}</p>
                 </div>
-
-                <div>
-                  <Label htmlFor="email">メールアドレス *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={candidateEmail}
-                    onChange={(e) => setCandidateEmail(e.target.value)}
-                    placeholder="yamada@example.com"
-                    required
-                    disabled={isUploading}
-                  />
-                </div>
-              </div>
+              )}
 
               <div>
                 <Label>CV（履歴書・職務経歴書）*</Label>
@@ -138,7 +141,7 @@ export default function UploadPage() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={!selectedFile || !candidateName || !candidateEmail || isUploading}
+                disabled={!selectedFile || isUploading}
               >
                 {isUploading ? (
                   <>

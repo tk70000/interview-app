@@ -39,12 +39,13 @@ export async function GET(
           return
         }
 
-        // 会話履歴を取得
+        // 会話履歴を取得（最新10件に制限）
         const { data: messages, error: messagesError } = await supabase
           .from('messages')
           .select('*')
           .eq('session_id', sessionId)
-          .order('created_at', { ascending: true })
+          .order('created_at', { ascending: false })
+          .limit(10)
 
         if (messagesError) {
           controller.enqueue(
@@ -87,11 +88,13 @@ export async function GET(
           encoder.encode(`data: ${JSON.stringify({ type: 'start' })}\n\n`)
         )
 
-        // OpenAI APIからストリーミング
-        const chatMessages = messages.map(m => ({
-          role: m.role as 'user' | 'assistant' | 'system',
-          content: m.content,
-        }))
+        // OpenAI APIからストリーミング（メッセージを時系列順に並び替え）
+        const chatMessages = messages
+          .reverse() // 降順で取得したものを昇順に戻す
+          .map(m => ({
+            role: m.role as 'user' | 'assistant' | 'system',
+            content: m.content,
+          }))
 
         for await (const chunk of streamChatResponse(chatMessages, context)) {
           controller.enqueue(

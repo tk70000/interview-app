@@ -56,11 +56,27 @@ export function ChatInterface({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // 日本語入力中（IME変換中）は何もしない
+    if (e.nativeEvent.isComposing || e.keyCode === 229) {
+      return
+    }
+    
+    // Enterで送信、Shift+Enterで改行
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSubmit(e)
     }
   }
+  
+  // テキストエリアの高さを自動調整
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      const scrollHeight = textareaRef.current.scrollHeight
+      // 最小60px、最大200pxの範囲で自動調整
+      textareaRef.current.style.height = `${Math.min(Math.max(60, scrollHeight), 200)}px`
+    }
+  }, [input])
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
@@ -103,8 +119,8 @@ export function ChatInterface({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="メッセージを入力してください..."
-            className="flex-1 min-h-[60px] resize-none"
+            placeholder="メッセージを入力してください... (Enterで送信、Shift+Enterで改行)"
+            className="flex-1 min-h-[60px] max-h-[200px] resize-none overflow-y-auto"
             disabled={isLoading || isStreaming}
           />
           <Button

@@ -74,60 +74,6 @@ export async function uploadFile(file: File, candidateId: string): Promise<strin
   return publicUrl
 }
 
-// PDFからテキスト抽出（実際の実装ではAWS Textractを使用）
-export async function extractTextFromPDF(fileUrl: string): Promise<string> {
-  // 注意: これはモックの実装です
-  // 実際の実装では、AWS Textract APIを呼び出します
-  
-  // モック実装として、簡単なテキストを返す
-  return `
-    山田太郎
-    データサイエンティスト
-    
-    【職歴】
-    2020年4月〜現在: 株式会社ABC データ分析部門
-    - 機械学習モデルの開発と運用
-    - ビッグデータ分析基盤の構築
-    - A/Bテストの設計と分析
-    
-    【スキル】
-    - Python, R, SQL
-    - TensorFlow, PyTorch, scikit-learn
-    - AWS, GCP
-    - 統計学、機械学習、深層学習
-    
-    【学歴】
-    2018年3月: XYZ大学 情報工学部 卒業
-  `
-}
+// この関数はサーバーサイドでのみ使用されるため、server-utils.tsに移動しました
 
-// DOCXからテキスト抽出
-export async function extractTextFromDOCX(fileUrl: string): Promise<string> {
-  // 注意: これはモックの実装です
-  // 実際の実装では、mammothなどのライブラリを使用
-  
-  return extractTextFromPDF(fileUrl) // モックとして同じテキストを返す
-}
-
-// LinkedIn JSONからテキスト抽出
-export async function extractTextFromLinkedInJSON(fileUrl: string): Promise<string> {
-  // 注意: これはモックの実装です
-  // 実際の実装では、JSONをパースして構造化データを抽出
-  
-  return extractTextFromPDF(fileUrl) // モックとして同じテキストを返す
-}
-
-// ファイルタイプに応じたテキスト抽出
-export async function extractTextFromFile(fileUrl: string, fileType: string): Promise<string> {
-  switch (fileType) {
-    case 'application/pdf':
-      return extractTextFromPDF(fileUrl)
-    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-    case 'application/msword':
-      return extractTextFromDOCX(fileUrl)
-    case 'application/json':
-      return extractTextFromLinkedInJSON(fileUrl)
-    default:
-      throw new Error('サポートされていないファイル形式です')
-  }
-}
+// テキスト抽出関数はserver-utils.tsに移動しました
