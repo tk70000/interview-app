@@ -1,0 +1,46 @@
+name: Test Claude Code Action
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Test message to display'
+        required: true
+        default: 'Hello from Claude Code!'
+      environment:
+        description: 'Environment name'
+        required: false
+        default: 'development'
+
+jobs:
+  test-action:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Display message
+      run: |
+        echo "🤖 Claude Code Action Test"
+        echo "Message: ${{ github.event.inputs.message }}"
+        echo "Environment: ${{ github.event.inputs.environment }}"
+        echo "Triggered by: ${{ github.actor }}"
+        echo "Time: $(date)"
+    
+    - name: Create test file
+      run: |
+        mkdir -p test-output
+        echo "Test run at $(date)" > test-output/test-result.txt
+        echo "Message: ${{ github.event.inputs.message }}" >> test-output/test-result.txt
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: test-output/
+    
+    - name: Final status
+      run: |
+        echo "✅ Test completed successfully!"
+        echo "Check the Actions tab for artifacts"
