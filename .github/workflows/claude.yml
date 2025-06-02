@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: anthropics/claude-code-action@beta
         with:
-          model: claude-4-sonnet-20250522
+          model: claude-3-5-sonnet-20241022
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allowed_tools: "Bash,Edit,MultiEdit,Write,Read,Glob,Grep"
