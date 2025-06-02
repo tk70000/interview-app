@@ -17,6 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: anthropics/claude-code-action@beta
+        env:
+          CLAUDE_WORKING_DIR: ${{ github.workspace }}
+          CLAUDE_USE_RELATIVE_PATHS: true
         with:
           model: claude-3-5-sonnet-20241022
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
