@@ -21,4 +21,4 @@ jobs:
           model: claude-3-5-sonnet-20241022
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          allowed_tools: "Bash,Edit,MultiEdit,Write,Read,Glob,Grep"
+          allowed_tools: "Bash,Edit,MultiEdit,Write,Read,Glob,Grep,mcp__github__create_pull_request,mcp__github_file_ops__commit_files"
