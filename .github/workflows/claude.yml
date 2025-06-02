@@ -7,6 +7,7 @@ on:
 permissions:
   contents: write        # push, PR 作成
   pull-requests: write
+  issues: write         # issue コメント作成・編集
   actions: read
 
 jobs:
