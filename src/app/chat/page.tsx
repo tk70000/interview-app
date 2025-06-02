@@ -6,6 +6,7 @@ import { ArrowLeft, Info, CheckCircle, UserCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChatInterface } from '@/components/chat-interface'
+import { InterviewSchedulerModal } from '@/components/interview-scheduler-modal'
 import { Message, ChatStreamEvent } from '@/types'
 import { getErrorMessage, generateId } from '@/lib/utils'
 import { withErrorBoundary } from '@/components/error-boundary'
@@ -21,27 +22,33 @@ function ChatPage() {
   const [showSummary, setShowSummary] = useState(false)
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
   const [summary, setSummary] = useState('')
+  const [showInterviewScheduler, setShowInterviewScheduler] = useState(false)
+  const [candidateName, setCandidateName] = useState('')
+  const [candidateEmail, setCandidateEmail] = useState('')
   const eventSourceRef = useRef<EventSource | null>(null)
   const streamingContentRef = useRef<string>('')
 
   useEffect(() => {
     // セッション情報を取得
     const storedSessionId = localStorage.getItem('currentSessionId')
-    const candidateName = localStorage.getItem('candidateName')
+    const storedCandidateName = localStorage.getItem('candidateName')
+    const storedCandidateEmail = localStorage.getItem('userEmail') || ''
     const initialQuestions = localStorage.getItem('initialQuestions')
 
-    if (!storedSessionId || !candidateName) {
+    if (!storedSessionId || !storedCandidateName) {
       router.push('/upload')
       return
     }
 
     setSessionId(storedSessionId)
+    setCandidateName(storedCandidateName)
+    setCandidateEmail(storedCandidateEmail)
 
     // 初回質問を表示
     if (initialQuestions) {
       try {
         const questions = JSON.parse(initialQuestions)
-        let introMessage = `こんにちは、${candidateName}さん。\n`
+        let introMessage = `こんにちは、${storedCandidateName}さん。\n`
         
         // CV要約をチェックして、読み込みエラーかどうか判定
         if (questions.some((q: string) => q.includes('お仕事内容') || q.includes('キャリアの概要'))) {
@@ -232,9 +239,10 @@ function ChatPage() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setShowInterviewScheduler(true)}
             >
               <UserCircle className="mr-2 h-4 w-4" />
-              キャリアアドバイザー
+              キャリアアドバイザーに相談
             </Button>
           </div>
         </div>
@@ -288,6 +296,14 @@ function ChatPage() {
           </div>
         )}
       </div>
+
+      <InterviewSchedulerModal
+        isOpen={showInterviewScheduler}
+        onClose={() => setShowInterviewScheduler(false)}
+        candidateName={candidateName}
+        candidateEmail={candidateEmail}
+        sessionId={sessionId || ''}
+      />
     </div>
   )
 }

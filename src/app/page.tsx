@@ -1,14 +1,15 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Upload, MessageSquare, BarChart3 } from 'lucide-react'
+import { Upload, MessageSquare, BarChart3, TestTube2 } from 'lucide-react'
 
 export default function HomePage() {
   const router = useRouter()
+  const [isDemoMode, setIsDemoMode] = useState(false)
 
   const handleNavigation = (path: string) => {
     console.log(`Navigating to: ${path}`)
@@ -18,6 +19,20 @@ export default function HomePage() {
       console.error('Navigation error:', error)
     }
   }
+
+  const handleDemoMode = () => {
+    // デモモードを有効にして、demo用のアカウントでログイン
+    localStorage.setItem('isDemoMode', 'true')
+    localStorage.setItem('isAuthenticated', 'true')
+    localStorage.setItem('userEmail', 'demo@example.com')
+    localStorage.setItem('userId', 'demo-user-id')
+    router.push('/upload')
+  }
+
+  useEffect(() => {
+    // デモモードの状態を確認
+    setIsDemoMode(localStorage.getItem('isDemoMode') === 'true')
+  }, [])
 
   React.useEffect(() => {
     console.log('HomePage mounted, router:', router)
@@ -48,9 +63,22 @@ export default function HomePage() {
             AIキャリアアドバイザーが、あなたの経験と強みを深く理解し、
             最適なキャリアパスをご提案します
           </p>
-          <Button size="lg" className="text-lg px-8 py-6" onClick={() => handleNavigation('/auth/signin')}>
-            無料でキャリア相談を始める
-          </Button>
+          <div className="space-y-4">
+            <Button size="lg" className="text-lg px-8 py-6" onClick={() => handleNavigation('/auth/signin')}>
+              無料でキャリア相談を始める
+            </Button>
+            <div className="text-center">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="text-lg px-6 py-4" 
+                onClick={handleDemoMode}
+              >
+                <TestTube2 className="mr-2 h-5 w-5" />
+                デモを試す（登録不要）
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* 使い方セクション */}

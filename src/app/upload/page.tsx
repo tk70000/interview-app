@@ -59,10 +59,17 @@ export default function UploadPage() {
     setError('')
 
     try {
+      // デモユーザーかどうかを判定（demo.で始まるメールアドレスやtest@で始まるなど）
+      const isDemoUser = userEmail.startsWith('demo.') || 
+                        userEmail.startsWith('test@') || 
+                        userEmail.includes('example.com') ||
+                        localStorage.getItem('isDemoMode') === 'true'
+
       const formData = new FormData()
       formData.append('file', selectedFile)
       formData.append('name', userName)
       formData.append('email', userEmail)
+      formData.append('isDemoUser', isDemoUser.toString())
 
       const response = await fetch('/api/v1/cv', {
         method: 'POST',
@@ -79,7 +86,8 @@ export default function UploadPage() {
       if (data.sessionId) {
         localStorage.setItem('currentSessionId', data.sessionId)
         localStorage.setItem('candidateName', userName)
-        localStorage.setItem('candidateEmail', userEmail)
+        // 元のメールアドレスまたは現在のメールアドレスを使用
+        localStorage.setItem('candidateEmail', data.originalEmail || userEmail)
         
         // 初回質問も保存
         if (data.initial_questions) {

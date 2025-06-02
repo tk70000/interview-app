@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -16,6 +17,8 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -35,6 +38,19 @@ export default function SignUpPage() {
 
     if (password.length < 6) {
       setError('パスワードは6文字以上で設定してください')
+      setIsLoading(false)
+      return
+    }
+
+    // 利用規約同意確認
+    if (!acceptedTerms) {
+      setError('利用規約に同意してください')
+      setIsLoading(false)
+      return
+    }
+
+    if (!acceptedPrivacy) {
+      setError('プライバシーポリシーに同意してください')
       setIsLoading(false)
       return
     }
@@ -120,6 +136,43 @@ export default function SignUpPage() {
                   />
                 </div>
 
+                {/* 利用規約・プライバシーポリシー同意 */}
+                <div className="space-y-3">
+                  <div className="flex items-start space-x-2">
+                    <Checkbox
+                      id="terms"
+                      checked={acceptedTerms}
+                      onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                      disabled={isLoading || success}
+                    />
+                    <div className="text-sm leading-tight">
+                      <Label htmlFor="terms" className="cursor-pointer">
+                        <Link href="/terms" target="_blank" className="text-blue-600 hover:underline">
+                          利用規約
+                        </Link>
+                        に同意します
+                      </Label>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-2">
+                    <Checkbox
+                      id="privacy"
+                      checked={acceptedPrivacy}
+                      onCheckedChange={(checked) => setAcceptedPrivacy(checked === true)}
+                      disabled={isLoading || success}
+                    />
+                    <div className="text-sm leading-tight">
+                      <Label htmlFor="privacy" className="cursor-pointer">
+                        <Link href="/privacy" target="_blank" className="text-blue-600 hover:underline">
+                          プライバシーポリシー
+                        </Link>
+                        に同意します
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+
                 {error && (
                   <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
@@ -138,7 +191,7 @@ export default function SignUpPage() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isLoading || success}
+                  disabled={isLoading || success || !acceptedTerms || !acceptedPrivacy}
                 >
                   {isLoading ? '登録中...' : '新規登録'}
                 </Button>
