@@ -7,6 +7,9 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'
 process.env.SERVICE_KEY = 'test-service-key'
 process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
 process.env.NEXT_PUBLIC_DISABLE_AUTH = 'true'
+process.env.GITHUB_CLIENT_ID = 'test-client-id'
+process.env.GITHUB_CLIENT_SECRET = 'test-client-secret'
+process.env.NODE_ENV = 'test'
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({

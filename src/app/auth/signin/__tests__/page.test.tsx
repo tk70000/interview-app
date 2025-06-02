@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import '@testing-library/jest-dom'
 import { useRouter } from 'next/navigation'
 import SignInPage from '../page'
 
@@ -117,9 +118,17 @@ describe('Authentication', () => {
   })
 
   describe('本番モードでのログイン', () => {
+    const originalNodeEnv = process.env.NODE_ENV
+    
     beforeEach(() => {
+      // @ts-ignore - Override readonly property for testing
       process.env.NODE_ENV = 'production'
       delete process.env.NEXT_PUBLIC_DISABLE_AUTH
+    })
+
+    afterEach(() => {
+      // @ts-ignore - Restore original value
+      process.env.NODE_ENV = originalNodeEnv
     })
 
     test('Supabaseでのログイン成功', async () => {

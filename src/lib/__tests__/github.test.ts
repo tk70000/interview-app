@@ -1,3 +1,6 @@
+// Mock fetch globally first
+global.fetch = jest.fn()
+
 // Create mock Octokit instance
 const mockOctokit = {
   repos: {
@@ -10,23 +13,30 @@ const mockOctokit = {
   }
 }
 
-// Mock Octokit and OAuth
+// Mock Octokit and OAuth before any imports
 jest.mock('@octokit/rest', () => ({
   Octokit: jest.fn().mockImplementation(() => mockOctokit)
 }))
 
 jest.mock('@octokit/oauth-app', () => ({
-  OAuthApp: jest.fn()
+  OAuthApp: jest.fn().mockImplementation(() => ({
+    createToken: jest.fn()
+  }))
 }))
-
-// Mock fetch globally
-global.fetch = jest.fn()
 
 import { getUserRepositories, triggerWorkflow } from '../github'
 
 describe('GitHub API', () => {
+  let consoleSpy: jest.SpyInstance
+
   beforeEach(() => {
     jest.clearAllMocks()
+    // Suppress console.error for test environment
+    consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+  })
+
+  afterEach(() => {
+    consoleSpy.mockRestore()
   })
 
   describe('getUserRepositories', () => {

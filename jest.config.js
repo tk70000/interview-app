@@ -25,6 +25,21 @@ const customJestConfig = {
     '!src/**/*.stories.{js,jsx,ts,tsx}',
     '!src/middleware.ts',
   ],
+  // Ensure tests run successfully in CI
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/.next/',
+  ],
+  // Set timeout for CI environments
+  testTimeout: 10000,
+  // Configure for CI
+  verbose: process.env.CI === 'true',
+  // Exit cleanly
+  forceExit: false,
+  // Handle async operations properly
+  detectOpenHandles: false,
+  // Silent mode if desired in CI
+  silent: false,
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

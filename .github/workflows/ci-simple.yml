@@ -32,11 +32,14 @@ jobs:
       run: npm test
       env:
         CI: true
+        NODE_ENV: test
         NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co'
         NEXT_PUBLIC_SUPABASE_ANON_KEY: 'dummy-key'
         SERVICE_KEY: 'dummy-service-key'
         NEXT_PUBLIC_APP_URL: 'http://localhost:3000'
         NEXT_PUBLIC_DISABLE_AUTH: 'true'
+        GITHUB_CLIENT_ID: 'test-client-id'
+        GITHUB_CLIENT_SECRET: 'test-client-secret'
     
     - name: Build check
       run: npm run build
@@ -46,3 +49,5 @@ jobs:
         SERVICE_KEY: 'dummy-service-key'
         NEXT_PUBLIC_APP_URL: 'http://localhost:3000'
         NEXT_PUBLIC_DISABLE_AUTH: 'true'
+        GITHUB_CLIENT_ID: 'test-client-id'
+        GITHUB_CLIENT_SECRET: 'test-client-secret'

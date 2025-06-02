@@ -1,15 +1,39 @@
 import { Octokit } from '@octokit/rest';
 import { OAuthApp } from '@octokit/oauth-app';
 
-export const githubOAuthApp = new OAuthApp({
-  clientType: 'oauth-app',
-  clientId: process.env.GITHUB_CLIENT_ID!,
-  clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-});
+let githubOAuthApp: OAuthApp | null = null;
+
+function getGithubOAuthApp() {
+  if (!githubOAuthApp) {
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+    
+    if (!clientId || !clientSecret) {
+      // テスト環境ではダミー値を使用
+      if (process.env.NODE_ENV === 'test' || process.env.CI === 'true') {
+        githubOAuthApp = new OAuthApp({
+          clientType: 'oauth-app',
+          clientId: 'dummy-client-id',
+          clientSecret: 'dummy-client-secret',
+        });
+        return githubOAuthApp;
+      }
+      throw new Error('GitHub OAuth credentials are not configured');
+    }
+    
+    githubOAuthApp = new OAuthApp({
+      clientType: 'oauth-app',
+      clientId,
+      clientSecret,
+    });
+  }
+  return githubOAuthApp;
+}
 
 export async function exchangeCodeForToken(code: string) {
   try {
-    const { authentication } = await githubOAuthApp.createToken({
+    const app = getGithubOAuthApp();
+    const { authentication } = await app.createToken({
       code,
     });
     return authentication;
