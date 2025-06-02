@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CheckCircle, XCircle, Github } from 'lucide-react'
+import { SessionSelector } from '@/components/session-selector'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -81,31 +82,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>
-                Common tasks and navigation
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button 
-                onClick={() => router.push('/upload')}
-                variant="outline"
-                className="w-full"
-              >
-                Upload CV
-              </Button>
-              
-              <Button 
-                onClick={() => router.push('/chat')}
-                variant="outline"
-                className="w-full"
-              >
-                Start Chat
-              </Button>
-            </CardContent>
-          </Card>
+          <SessionSelector />
         </div>
         
         {/* デバッグ情報 */}
