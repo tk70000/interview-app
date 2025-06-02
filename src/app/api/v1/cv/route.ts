@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File
     const candidateName = formData.get('name') as string
     const candidateEmail = formData.get('email') as string
+    const isDemoUser = formData.get('isDemoUser') === 'true'
 
     if (!file || !candidateName || !candidateEmail) {
       return NextResponse.json(
@@ -76,13 +77,21 @@ export async function POST(request: NextRequest) {
       // 候補者情報を作成
       candidateId = generateId()
       
+      // デモユーザー用のセッションID生成
+      const demoSessionId = isDemoUser ? generateId() : null
+      
       // 認証が無効化されている場合のテスト用user_id（UUID形式）
       const testUserId = process.env.DISABLE_AUTH === 'true' ? '00000000-0000-0000-0000-000000000000' : undefined
       
+      // デモユーザーの場合、メール重複を避けるためにタイムスタンプを追加
+      const finalEmail = isDemoUser 
+        ? `${candidateEmail.split('@')[0]}_${Date.now()}@${candidateEmail.split('@')[1]}`
+        : candidateEmail
+
       const candidateData: any = {
         id: candidateId,
         name: candidateName,
-        email: candidateEmail,
+        email: finalEmail,
       }
       
       // user_idカラムが存在する場合は追加（一時的にコメントアウト）
@@ -114,17 +123,16 @@ export async function POST(request: NextRequest) {
         throw uploadError
       }
 
-      // テキスト抽出（アップロードされたファイルから直接）
+      // テキスト抽出（OpenAI File Upload APIを使用）
       console.log('ファイルからテキスト抽出開始...')
       const arrayBuffer = await file.arrayBuffer()
-      const base64 = Buffer.from(arrayBuffer).toString('base64')
-      const dataUrl = `data:${file.type};base64,${base64}`
+      const fileBuffer = Buffer.from(arrayBuffer)
       
       let cvText: string
       let isTextExtractionSuccessful = true
       
       try {
-        cvText = await extractTextFromFile(dataUrl, file.type)
+        cvText = await extractTextFromFile(fileBuffer, file.type, file.name)
         console.log('CV text extracted, length:', cvText.length)
       } catch (extractError) {
         console.error('テキスト抽出に失敗しました:', extractError)
@@ -216,6 +224,7 @@ export async function POST(request: NextRequest) {
         cv_url: cvUrl,
         summary: cvSummary,
         initial_questions: initialQuestions,
+        originalEmail: candidateEmail, // 元のメールアドレスを返す
       }
 
       console.log('Sending successful response')

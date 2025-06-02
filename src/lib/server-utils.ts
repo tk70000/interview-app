@@ -16,149 +16,108 @@ function getOpenAIClient(): OpenAI {
   })
 }
 
-// PDFからテキスト抽出（GPT-4oを使用）
-export async function extractTextFromPDF(fileUrl: string): Promise<string> {
+// OpenAI Assistants APIを使用したテキスト抽出
+export async function extractTextFromFileUpload(
+  fileBuffer: Buffer, 
+  fileName: string, 
+  mimeType: string
+): Promise<string> {
   try {
-    console.log('PDFテキスト抽出開始（GPT-4o使用）:', fileUrl)
-    
-    let base64Data: string
-    
-    if (fileUrl.startsWith('data:')) {
-      // Data URLの場合
-      base64Data = fileUrl.split(',')[1]
-    } else {
-      // 通常のURLの場合
-      const response = await fetch(fileUrl)
-      if (!response.ok) {
-        throw new Error(`ファイルの取得に失敗しました: ${response.status}`)
-      }
-      
-      const arrayBuffer = await response.arrayBuffer()
-      const buffer = Buffer.from(arrayBuffer)
-      base64Data = buffer.toString('base64')
-    }
-    
-    console.log('PDFファイルをGPT-4oで処理中...')
+    console.log('OpenAI Assistants APIでテキスト抽出開始:', fileName, mimeType)
     
     const openai = getOpenAIClient()
     
-    // GPT-4oはPDFを画像として処理します
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: 'あなたはPDFドキュメントからテキストを抽出する専門家です。与えられたPDFから、すべてのテキスト内容を正確に抽出し、元の文書の構造と改行を保持したまま出力してください。画像や図表がある場合は、その内容も説明してください。'
-        },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'このPDFファイルからすべてのテキストを抽出してください。職務経歴書の場合は、個人情報、職歴、スキル、資格などすべての情報を含めてください。'
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:application/pdf;base64,${base64Data}`,
-                detail: 'high'
-              }
-            }
-          ]
-        }
-      ],
-      temperature: 0.1,
-      max_tokens: 4000,
+    // ファイルをOpenAIにアップロード
+    const file = await openai.files.create({
+      file: new File([fileBuffer], fileName, { type: mimeType }),
+      purpose: 'assistants'
     })
     
-    const extractedText = response.choices[0]?.message?.content || ''
+    console.log('ファイルアップロード完了:', file.id)
     
-    console.log('抽出されたテキスト文字数:', extractedText.length)
-    console.log('抽出されたテキストの最初の200文字:', extractedText.substring(0, 200))
-    
-    if (!extractedText) {
-      throw new Error('PDFからテキストを抽出できませんでした。')
-    }
-    
-    return extractedText
-    
-  } catch (error) {
-    console.error('PDFテキスト抽出エラー:', error)
-    // エラーをそのまま投げる（ダミーデータは返さない）
-    throw new Error(`PDFからのテキスト抽出に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`)
-  }
-}
+    // アシスタントを作成
+    const assistant = await openai.beta.assistants.create({
+      name: "CV Text Extractor",
+      instructions: `あなたは履歴書・職務経歴書の専門的な読み取りを行うエキスパートです。
+アップロードされた文書から、以下の情報を正確に抽出してください：
 
-// DOCXからテキスト抽出（GPT-4oを使用）
-export async function extractTextFromDOCX(fileUrl: string): Promise<string> {
-  try {
-    console.log('DOCXテキスト抽出開始（GPT-4o使用）:', fileUrl)
-    
-    let base64Data: string
-    
-    if (fileUrl.startsWith('data:')) {
-      // Data URLの場合
-      base64Data = fileUrl.split(',')[1]
-    } else {
-      // 通常のURLの場合
-      const response = await fetch(fileUrl)
-      if (!response.ok) {
-        throw new Error(`ファイルの取得に失敗しました: ${response.status}`)
-      }
-      
-      const arrayBuffer = await response.arrayBuffer()
-      const buffer = Buffer.from(arrayBuffer)
-      base64Data = buffer.toString('base64')
-    }
-    
-    console.log('DOCXファイルをGPT-4oで処理中...')
-    
-    const openai = getOpenAIClient()
-    
-    // GPT-4oはDOCXも処理可能
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: 'あなたはDOCXドキュメントからテキストを抽出する専門家です。与えられたDOCXファイルから、すべてのテキスト内容を正確に抽出し、元の文書の構造と改行を保持したまま出力してください。表や図表がある場合は、その内容も説明してください。'
-        },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'このDOCXファイルからすべてのテキストを抽出してください。職務経歴書の場合は、個人情報、職歴、スキル、資格などすべての情報を含めてください。'
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${base64Data}`,
-                detail: 'high'
-              }
-            }
-          ]
-        }
-      ],
-      temperature: 0.1,
-      max_tokens: 4000,
+1. 個人情報（氏名、連絡先、年齢など）
+2. 学歴・職歴の詳細（時系列順）
+3. スキル・技能・資格
+4. プロジェクト経験・実績
+5. 自己PR・志望動機
+
+出力形式：
+- 元の文書の構造と階層を保持
+- 読みにくい部分は [判読困難] と記載
+- 表形式のデータは適切にフォーマット
+- 日本語として自然な文章に整形`,
+      model: "gpt-4o-mini",
+      tools: [{ type: "file_search" }]
     })
     
-    const extractedText = response.choices[0]?.message?.content || ''
-    
-    console.log('抽出されたテキスト文字数:', extractedText.length)
-    console.log('抽出されたテキストの最初の200文字:', extractedText.substring(0, 200))
-    
-    if (!extractedText) {
-      throw new Error('DOCXからテキストを抽出できませんでした。')
+    try {
+      // スレッドを作成
+      const thread = await openai.beta.threads.create({
+        messages: [
+          {
+            role: "user",
+            content: "この履歴書・職務経歴書からすべてのテキスト情報を抽出してください。レイアウトや表の構造も考慮して、読みやすい形式で出力してください。",
+            attachments: [
+              {
+                file_id: file.id,
+                tools: [{ type: "file_search" }]
+              }
+            ]
+          }
+        ]
+      })
+      
+      // 実行
+      const run = await openai.beta.threads.runs.create(thread.id, {
+        assistant_id: assistant.id
+      })
+      
+      // 完了まで待機
+      let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id)
+      while (runStatus.status === 'queued' || runStatus.status === 'in_progress') {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id)
+      }
+      
+      if (runStatus.status !== 'completed') {
+        throw new Error(`アシスタント実行が失敗しました: ${runStatus.status}`)
+      }
+      
+      // レスポンスを取得
+      const messages = await openai.beta.threads.messages.list(thread.id)
+      const extractedText = messages.data[0]?.content[0]?.type === 'text' 
+        ? messages.data[0].content[0].text.value 
+        : ''
+      
+      console.log('抽出されたテキスト文字数:', extractedText.length)
+      console.log('抽出されたテキストの最初の200文字:', extractedText.substring(0, 200))
+      
+      if (!extractedText || extractedText.length < 50) {
+        throw new Error('ファイルから十分なテキストを抽出できませんでした。')
+      }
+      
+      return extractedText
+      
+    } finally {
+      // クリーンアップ
+      try {
+        await openai.beta.assistants.del(assistant.id)
+        await openai.files.del(file.id)
+        console.log('リソースをクリーンアップしました')
+      } catch (deleteError) {
+        console.warn('クリーンアップに失敗:', deleteError)
+      }
     }
     
-    return extractedText
-    
   } catch (error) {
-    console.error('DOCXテキスト抽出エラー:', error)
-    // エラーをそのまま投げる（ダミーデータは返さない）
-    throw new Error(`DOCXからのテキスト抽出に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    console.error('OpenAI Assistants APIエラー:', error)
+    throw new Error(`ファイルからのテキスト抽出に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
@@ -238,15 +197,28 @@ export async function extractTextFromLinkedInJSON(fileUrl: string): Promise<stri
 }
 
 // ファイルタイプに応じたテキスト抽出（サーバーサイド専用）
-export async function extractTextFromFile(fileUrl: string, fileType: string): Promise<string> {
+export async function extractTextFromFile(
+  fileData: Buffer | string, 
+  fileType: string,
+  fileName: string = 'document'
+): Promise<string> {
   switch (fileType) {
     case 'application/pdf':
-      return extractTextFromPDF(fileUrl)
     case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
     case 'application/msword':
-      return extractTextFromDOCX(fileUrl)
+      // Buffer形式に統一
+      const buffer = fileData instanceof Buffer 
+        ? fileData 
+        : Buffer.from((fileData as string).split(',')[1], 'base64')
+      return extractTextFromFileUpload(buffer, fileName, fileType)
+    
     case 'application/json':
-      return extractTextFromLinkedInJSON(fileUrl)
+      // JSON の場合は文字列形式で処理
+      const jsonString = fileData instanceof Buffer 
+        ? fileData.toString('utf-8')
+        : fileData
+      return extractTextFromLinkedInJSON(jsonString as string)
+    
     default:
       throw new Error('サポートされていないファイル形式です')
   }
