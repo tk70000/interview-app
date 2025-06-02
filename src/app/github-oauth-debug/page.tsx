@@ -169,7 +169,7 @@ export default function GitHubOAuthDebugPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <p className="text-sm">If the automatic flow isn't working, try this manual URL:</p>
+                <p className="text-sm">If the automatic flow isn&apos;t working, try this manual URL:</p>
                 <code className="block bg-muted p-2 rounded text-xs break-all">
                   https://github.com/login/oauth/authorize?client_id=Ov23liGLOiqW8HdupTih&redirect_uri=http://localhost:3000/api/auth/github/callback&scope=repo read:user workflow
                 </code>

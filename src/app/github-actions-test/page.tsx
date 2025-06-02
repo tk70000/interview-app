@@ -222,7 +222,7 @@ git push origin main`}
                 <h4 className="font-medium">3. Required permissions:</h4>
                 <ul className="list-disc list-inside text-sm text-muted-foreground">
                   <li>Repository must be public or you must have write access</li>
-                  <li>GitHub token needs 'workflow' scope</li>
+                  <li>GitHub token needs &apos;workflow&apos; scope</li>
                 </ul>
               </div>
             </CardContent>
