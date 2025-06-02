@@ -17,11 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: anthropics/claude-code-action@beta
-        env:
-          CLAUDE_WORKING_DIR: ${{ github.workspace }}
-          CLAUDE_USE_RELATIVE_PATHS: true
         with:
           model: claude-3-5-sonnet-20241022
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allowed_tools: "Bash,Edit,MultiEdit,Write,Read,Glob,Grep,mcp__github__create_pull_request,mcp__github_file_ops__commit_files"
+          working-directory: ${{ github.workspace }}
