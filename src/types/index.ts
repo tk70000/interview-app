@@ -87,3 +87,19 @@ export interface ApiResponse<T> {
   error?: ErrorResponse
   success: boolean
 }
+
+// 面接可能日時の型定義
+export interface InterviewAvailability {
+  candidateId: string
+  candidateEmail: string
+  candidateName: string
+  availableDates: AvailableDate[]
+  phoneNumber?: string
+  additionalNotes?: string
+  submittedAt: Date
+}
+
+export interface AvailableDate {
+  date: string // YYYY-MM-DD
+  timePreference: 'morning' | 'afternoon' | 'full-day'
+}

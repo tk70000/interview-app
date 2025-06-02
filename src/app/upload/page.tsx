@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { CVUpload } from '@/components/cv-upload'
 import { Spinner } from '@/components/ui/spinner'
 import { getErrorMessage } from '@/lib/utils'
+import { InterviewSchedulerModal } from '@/components/interview-scheduler-modal'
 
 export default function UploadPage() {
   const router = useRouter()
@@ -18,6 +19,8 @@ export default function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [userEmail, setUserEmail] = useState('')
   const [userName, setUserName] = useState('')
+  const [candidateId, setCandidateId] = useState('')
+  const [showInterviewModal, setShowInterviewModal] = useState(false)
 
   useEffect(() => {
     // ユーザー情報を取得
@@ -84,6 +87,11 @@ export default function UploadPage() {
         // 初回質問も保存
         if (data.initial_questions) {
           localStorage.setItem('initialQuestions', JSON.stringify(data.initial_questions))
+        }
+
+        if (data.candidateId) {
+          setCandidateId(data.candidateId)
+          setShowInterviewModal(true)
         }
       }
 
@@ -153,6 +161,35 @@ export default function UploadPage() {
                 )}
               </Button>
             </form>
+
+            {showInterviewModal && candidateId && (
+              <div className="mt-6">
+                <InterviewSchedulerModal
+                  candidateId={candidateId}
+                  candidateEmail={userEmail}
+                  candidateName={userName}
+                  onSubmit={async (data) => {
+                    try {
+                      const response = await fetch('/api/v1/interview-availability', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data),
+                      })
+
+                      if (!response.ok) {
+                        throw new Error('面接希望日時の送信に失敗しました')
+                      }
+
+                      router.push('/chat')
+                    } catch (error) {
+                      setError(getErrorMessage(error))
+                    }
+                  }}
+                />
+              </div>
+            )}
 
             <div className="mt-8 p-4 bg-muted rounded-lg">
               <h3 className="font-medium mb-2">ご利用にあたって</h3>
