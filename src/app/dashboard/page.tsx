@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CheckCircle, XCircle, Github, MessageSquare, Plus, Calendar } from 'lucide-react'
-import { SessionManager } from '@/lib/session-manager'
-import { getCurrentUser } from '@/lib/auth'
+import { SessionManagerClient } from '@/lib/session-manager-client'
+import { getCurrentUser } from '@/lib/auth-client'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 
@@ -38,7 +38,7 @@ export default function DashboardPage() {
       setIsLoading(true)
       // TODO: 実際のユーザーIDを取得
       const userId = localStorage.getItem('userId') || 'test-user-id'
-      const userSessions = await SessionManager.getUserSessions(userId)
+      const userSessions = await SessionManagerClient.getUserSessions(userId)
       setSessions(userSessions)
       setHasExistingSession(userSessions.length > 0)
     } catch (error) {

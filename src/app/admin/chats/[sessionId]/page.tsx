@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -73,7 +73,7 @@ export default function AdminChatDetailPage({ params }: { params: { sessionId: s
   const [saving, setSaving] = useState(false)
 
   // セッション詳細を取得
-  const fetchSessionDetail = async () => {
+  const fetchSessionDetail = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/admin/chats/${sessionId}`, {
@@ -97,11 +97,11 @@ export default function AdminChatDetailPage({ params }: { params: { sessionId: s
     } finally {
       setLoading(false)
     }
-  }
+  }, [sessionId])
 
   useEffect(() => {
     fetchSessionDetail()
-  }, [sessionId])
+  }, [fetchSessionDetail])
 
   // 管理者メモを保存
   const saveAdminNote = async () => {
