@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { streamChatResponse } from '@/lib/openai'
 import { supabase } from '@/lib/supabase'
-import { getErrorMessage } from '@/lib/utils'
+import { getErrorMessage, generateId } from '@/lib/utils'
 
 export async function GET(
   request: NextRequest,
@@ -96,7 +96,11 @@ export async function GET(
             content: m.content,
           }))
 
+        // ストリーミングしながら完全な応答を収集
+        let fullResponse = ''
+        
         for await (const chunk of streamChatResponse(chatMessages, context)) {
+          fullResponse += chunk
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify({ 
               type: 'chunk', 
@@ -105,9 +109,30 @@ export async function GET(
           )
         }
 
+        // 完全な応答をデータベースに保存
+        const assistantMessageId = generateId()
+        const assistantMessage = {
+          id: assistantMessageId,
+          session_id: sessionId,
+          role: 'assistant',
+          content: fullResponse,
+          created_at: new Date().toISOString(),
+        }
+
+        const { error: saveError } = await supabase
+          .from('messages')
+          .insert(assistantMessage)
+
+        if (saveError) {
+          console.error('アシスタントメッセージの保存エラー:', saveError)
+        }
+
         // ストリーミング終了イベント
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ type: 'end' })}\n\n`)
+          encoder.encode(`data: ${JSON.stringify({ 
+            type: 'end',
+            messageId: assistantMessageId 
+          })}\n\n`)
         )
 
         controller.close()

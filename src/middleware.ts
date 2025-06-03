@@ -17,6 +17,12 @@ const protectedPaths = [
   ...(IS_TEST_MODE ? [] : ['/chat', '/dashboard', '/upload']),
 ]
 
+// 管理者権限が必要なパス
+const adminPaths = [
+  '/admin',
+  '/api/admin',
+]
+
 // 公開パス（認証不要）
 const publicPaths = [
   '/',
@@ -81,6 +87,36 @@ export async function middleware(request: NextRequest) {
     res.headers.set('X-RateLimit-Limit', rateLimitResult.limit.toString())
     res.headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString())
     res.headers.set('X-RateLimit-Reset', rateLimitResult.reset.toISOString())
+  }
+  
+  // 管理者パスかチェック
+  const isAdminPath = adminPaths.some(path => pathname.startsWith(path))
+  
+  // 管理者パスの場合は特別な処理
+  if (isAdminPath) {
+    // 開発環境では管理者認証をスキップ
+    if (IS_TEST_MODE) {
+      console.log('🧪 ADMIN MODE: 管理者認証がスキップされています')
+      return res
+    }
+    
+    // 管理者認証チェック（簡易版）
+    const adminSecret = request.headers.get('x-admin-secret')
+    const allowedAdminSecret = process.env.ADMIN_SECRET
+    
+    if (!adminSecret || !allowedAdminSecret || adminSecret !== allowedAdminSecret) {
+      if (pathname.startsWith('/api/admin')) {
+        return NextResponse.json(
+          { error: '管理者権限が必要です' },
+          { status: 403 }
+        )
+      }
+      
+      // 管理者ページの場合はホームにリダイレクト
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+    
+    return res
   }
   
   // 保護されたパスかチェック

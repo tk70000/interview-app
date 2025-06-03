@@ -119,46 +119,11 @@ export async function POST(
       .filter(m => m.role === 'assistant')
       .pop()
 
-    // フォローアップ質問が必要か判定
-    let response = ''
-    if (lastAssistantMessage) {
-      const { question, shouldAskFollowUp } = await generateFollowUpQuestion(
-        lastAssistantMessage.content,
-        content,
-        messages.map(m => ({ role: m.role, content: m.content }))
-      )
-
-      if (shouldAskFollowUp) {
-        response = question
-      } else {
-        // 通常の応答を生成
-        response = 'ご回答ありがとうございます。他に質問はありますか？'
-      }
-    } else {
-      response = 'メッセージを受け取りました。質問を続けてください。'
-    }
-
-    // アシスタントメッセージを保存
-    const assistantMessageId = generateId()
-    const assistantMessage: Message = {
-      id: assistantMessageId,
-      session_id: sessionId,
-      role: 'assistant',
-      content: response,
-      created_at: new Date().toISOString(),
-    }
-
-    const { error: assistantMessageError } = await supabase
-      .from('messages')
-      .insert(assistantMessage)
-
-    if (assistantMessageError) {
-      throw new Error(`応答の保存に失敗しました: ${assistantMessageError.message}`)
-    }
-
+    // アシスタントメッセージの保存は/streamエンドポイントで行うため、
+    // ここでは成功レスポンスのみ返す
     return NextResponse.json({
       success: true,
-      message: assistantMessage,
+      message: userMessage,
     })
   } catch (error) {
     console.error('Chat message error:', error)

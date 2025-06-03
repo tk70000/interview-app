@@ -234,14 +234,16 @@ export async function generateFollowUpQuestion(
         {
           role: 'system',
           content: `あなたは優秀なキャリアアドバイザーです。
-候補者の回答を聞いて、必要な場合のみ短いフォローアップ質問をしてください。
+候補者の回答を聞いて、より深い理解を得るために適切なフォローアップの質問や共感的なコメントを返してください。
 
-フォローアップが必要な場合：
-- もう少し具体的に聞きたい時
-- 興味深い点を掘り下げたい時
+応答のガイドライン：
+- 候補者の経験や感情に共感を示す
+- 具体的な事例や詳細を引き出す質問をする
+- 候補者の強みやポテンシャルを見出してフィードバックする
+- 必要に応じて複数の質問を含めても構いません
+- 温かく親しみやすいトーンで
 
-質問は必ず1文で、20文字以内を目安に。
-追加質問が不要なら"NO_FOLLOW_UP"と返してください。`
+追加の質問が不要で会話を終了する場合のみ"NO_FOLLOW_UP"と返してください。`
         },
         ...conversationHistory.slice(-4),
         {
@@ -249,11 +251,20 @@ export async function generateFollowUpQuestion(
           content: `質問: ${previousQuestion}\n回答: ${userAnswer}`
         }
       ],
-      temperature: 0.4,
-      max_tokens: 256,
+      temperature: 0.7,
+      max_tokens: 800,
     })
 
     const content = response.choices[0].message.content || ''
+    
+    // デバッグ: OpenAIからの生の応答を確認
+    console.log('=== OpenAI Response Debug ===')
+    console.log('Response length:', content.length)
+    console.log('Contains newlines:', content.includes('\n'))
+    console.log('Line count:', content.split('\n').length)
+    console.log('First 200 chars:', content.substring(0, 200))
+    console.log('Full content:', JSON.stringify(content))
+    console.log('=============================')
     
     if (content.includes('NO_FOLLOW_UP')) {
       return { question: '', shouldAskFollowUp: false }

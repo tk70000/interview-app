@@ -20,6 +20,8 @@ export interface Session {
   started_at: string
   ended_at?: string
   summary?: string
+  admin_note?: string
+  admin_updated_at?: string
 }
 
 // メッセージ情報
@@ -86,4 +88,71 @@ export interface ApiResponse<T> {
   data?: T
   error?: ErrorResponse
   success: boolean
+}
+
+// 管理者機能用の型定義
+
+// 管理者ユーザー
+export interface AdminUser {
+  id: string
+  email: string
+  name?: string
+  role: 'admin' | 'super_admin'
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+// 管理者アクティビティログ
+export interface AdminActivityLog {
+  id: string
+  admin_email: string
+  action: string
+  resource_type: string
+  resource_id?: string
+  details?: Record<string, any>
+  ip_address?: string
+  user_agent?: string
+  created_at: string
+}
+
+// セッション統計（管理者用）
+export interface SessionStats {
+  totalMessages: number
+  userMessages: number
+  assistantMessages: number
+  firstMessageAt?: string
+  lastMessageAt?: string
+  sessionDuration: number
+}
+
+// 管理者用のセッション詳細
+export interface AdminSessionDetail {
+  session: Session & {
+    candidates: Candidate
+  }
+  messages: Message[]
+  stats: SessionStats
+}
+
+// 管理者認証結果
+export interface AdminAuthResult {
+  isAdmin: boolean
+  method: 'email' | 'secret' | 'dev' | 'none'
+  email?: string
+}
+
+// 管理者チャット一覧のレスポンス
+export interface AdminChatsResponse {
+  sessions: Array<Session & {
+    candidates: Candidate
+    message_count: number
+  }>
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+  adminAuth: AdminAuthResult
 }

@@ -9,6 +9,8 @@ export interface Env {
   NODE_ENV?: string
   NEXT_PUBLIC_APP_URL?: string
   SESSION_TIMEOUT_MINUTES?: string
+  ADMIN_SECRET?: string
+  ADMIN_EMAILS?: string
 }
 
 // 環境変数の検証
@@ -30,6 +32,8 @@ export function validateEnv(): Env {
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     SESSION_TIMEOUT_MINUTES: process.env.SESSION_TIMEOUT_MINUTES,
+    ADMIN_SECRET: isServer ? process.env.ADMIN_SECRET : undefined,
+    ADMIN_EMAILS: isServer ? process.env.ADMIN_EMAILS : undefined,
   }
 
   const missingVars: string[] = []

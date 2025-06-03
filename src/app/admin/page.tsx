@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, RefreshCw, Search, Download } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Search, Download, MessageSquare, Users, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -108,6 +108,60 @@ export default function DashboardPage() {
               エクスポート
             </Button>
           </div>
+        </div>
+
+        {/* 管理機能メニュー */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push('/admin/chats')}>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-lg">
+                <MessageSquare className="mr-2 h-5 w-5 text-blue-600" />
+                チャット管理
+              </CardTitle>
+              <CardDescription>
+                ユーザーのチャット履歴を閲覧・管理
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                全てのユーザーセッションとチャット履歴の管理
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-md transition-shadow opacity-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-lg">
+                <Users className="mr-2 h-5 w-5 text-green-600" />
+                ユーザー管理
+              </CardTitle>
+              <CardDescription>
+                候補者アカウントの管理（準備中）
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                候補者の登録状況とアカウント管理
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-md transition-shadow opacity-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-lg">
+                <Settings className="mr-2 h-5 w-5 text-purple-600" />
+                システム設定
+              </CardTitle>
+              <CardDescription>
+                アプリケーション設定（準備中）
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                システム全体の設定と管理
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* 検索バー */}
