@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 結論
-    const hasAdminNote = results.tests.some(test => 
+    const hasAdminNote = results.tests.some((test: any) => 
       test.name === 'Select all columns' && test.hasAdminNote === true
     )
     

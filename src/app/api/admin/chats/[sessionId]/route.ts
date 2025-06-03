@@ -52,7 +52,7 @@ export async function GET(
       
       session = data
       sessionError = error
-    } catch (e) {
+    } catch (e: any) {
       sessionError = e
     }
     

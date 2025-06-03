@@ -138,7 +138,7 @@ export default function AdminChatDetailPage({ params }: { params: { sessionId: s
       session: {
         id: session.id,
         candidate: session.candidates,
-        created_at: session.created_at,
+        created_at: session.started_at, // SessionDetailsにはcreated_atがないのでstarted_atを使用
         stats
       },
       messages: messages.map(msg => ({
