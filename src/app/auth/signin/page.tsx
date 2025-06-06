@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,6 +13,9 @@ import { supabase } from '@/lib/supabase'
 
 export default function SignInPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirect') || '/upload'
+  
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -55,8 +58,8 @@ export default function SignInPage() {
 
       if (error) throw error
 
-      // サインイン成功後、アップロードページへリダイレクト
-      router.push('/upload')
+      // サインイン成功後、指定されたページまたはアップロードページへリダイレクト
+      router.push(redirectTo)
     } catch (error: any) {
       setError(error.message || 'サインインに失敗しました')
     } finally {

@@ -1,6 +1,6 @@
 // 認証をスキップするかどうかの判定
 export function isAuthDisabled(): boolean {
-  return process.env.DISABLE_AUTH === 'true'
+  return process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true'
 }
 
 // テスト用のユーザーID

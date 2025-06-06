@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { CVUpload } from '@/components/cv-upload'
 import { Spinner } from '@/components/ui/spinner'
 import { getErrorMessage } from '@/lib/utils'
+import { supabase } from '@/lib/supabase'
 
 export default function UploadPage() {
   const router = useRouter()
@@ -21,19 +22,24 @@ export default function UploadPage() {
 
   useEffect(() => {
     // ユーザー情報を取得
-    const email = localStorage.getItem('userEmail')
-    if (!email) {
-      // ログインしていない場合はサインインページへ
-      router.push('/auth/signin')
-      return
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        // ログインしていない場合はサインインページへ
+        router.push('/auth/signin?redirect=/upload')
+        return
+      }
+      
+      setUserEmail(user.email || '')
+      // メールアドレスから名前を推測（@マーク前の部分）
+      const nameFromEmail = (user.email || '').split('@')[0]
+        .replace(/[._-]/g, ' ')
+        .replace(/\b\w/g, char => char.toUpperCase())
+      setUserName(nameFromEmail)
     }
     
-    setUserEmail(email)
-    // メールアドレスから名前を推測（@マーク前の部分）
-    const nameFromEmail = email.split('@')[0]
-      .replace(/[._-]/g, ' ')
-      .replace(/\b\w/g, char => char.toUpperCase())
-    setUserName(nameFromEmail)
+    checkAuth()
   }, [router])
 
   const handleFileSelect = (file: File) => {

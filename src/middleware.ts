@@ -4,9 +4,8 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { getRateLimiter, RATE_LIMITS } from '@/lib/rate-limit'
 
 // 🧪 テスト環境フラグ - 本番では false に設定してください
-// 注意: ミドルウェアでは process.env.DISABLE_AUTH が読み込めない可能性があるため、
-// 開発環境では常に認証を無効化
-const IS_TEST_MODE = process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production'
+// NEXT_PUBLIC_DISABLE_AUTH を使用して明示的に制御
+const IS_TEST_MODE = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true'
 
 // 認証が必要なパス
 const protectedPaths = [
@@ -136,7 +135,7 @@ export async function middleware(request: NextRequest) {
       }
       
       // ページの場合はログインページにリダイレクト
-      const redirectUrl = new URL('/', request.url)
+      const redirectUrl = new URL('/auth/signin', request.url)
       redirectUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(redirectUrl)
     }
