@@ -60,9 +60,19 @@ interface SessionStats {
   sessionDuration: number
 }
 
-export default function AdminChatDetailPage({ params }: { params: { sessionId: string } }) {
+export default function AdminChatDetailPage({ 
+  params 
+}: { 
+  params: Promise<{ sessionId: string }> 
+}) {
   const router = useRouter()
-  const { sessionId } = params
+  const [sessionId, setSessionId] = useState<string>('')
+  
+  useEffect(() => {
+    params.then(({ sessionId }) => {
+      setSessionId(sessionId)
+    })
+  }, [params])
   
   const [session, setSession] = useState<SessionDetails | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -74,6 +84,8 @@ export default function AdminChatDetailPage({ params }: { params: { sessionId: s
 
   // セッション詳細を取得
   const fetchSessionDetail = useCallback(async () => {
+    if (!sessionId) return
+    
     try {
       setLoading(true)
       const response = await fetch(`/api/admin/chats/${sessionId}`, {

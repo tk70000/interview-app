@@ -6,7 +6,7 @@ import { getErrorMessage } from '@/lib/utils'
 // 特定セッションの詳細チャット履歴取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     // 管理者認証チェック
@@ -18,7 +18,7 @@ export async function GET(
       )
     }
 
-    const { sessionId } = params
+    const { sessionId } = await params
     const supabase = getServiceSupabase()
 
     // セッション基本情報を取得（admin_noteエラーに対応）
@@ -158,7 +158,7 @@ export async function GET(
 // セッションの管理者メモを追加/更新
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     // 管理者認証チェック
@@ -170,7 +170,7 @@ export async function PATCH(
       )
     }
 
-    const { sessionId } = params
+    const { sessionId } = await params
     const { adminNote, status } = await request.json()
 
     const supabase = getServiceSupabase()
