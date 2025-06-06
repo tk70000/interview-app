@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Building2, MapPin, Briefcase, DollarSign, Star, ChevronRight, Loader2 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -41,11 +41,7 @@ export function JobRecommendations({ sessionId, className }: JobRecommendationsP
   const [selectedJob, setSelectedJob] = useState<JobMatch | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  useEffect(() => {
-    fetchJobMatches()
-  }, [sessionId])
-
-  const fetchJobMatches = async () => {
+  const fetchJobMatches = useCallback(async () => {
     try {
       const response = await fetch(`/api/v1/job-matching/${sessionId}`)
       if (!response.ok) {
@@ -59,7 +55,11 @@ export function JobRecommendations({ sessionId, className }: JobRecommendationsP
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [sessionId])
+
+  useEffect(() => {
+    fetchJobMatches()
+  }, [fetchJobMatches])
 
   const openJobDetail = (job: JobMatch) => {
     setSelectedJob(job)

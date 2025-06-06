@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { ArrowLeft, Edit, Building2, MapPin, Briefcase, DollarSign, Calendar, Eye, EyeOff } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -42,13 +42,7 @@ export default function JobDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (jobId) {
-      fetchJob()
-    }
-  }, [jobId])
-
-  const fetchJob = async () => {
+  const fetchJob = useCallback(async () => {
     setIsLoading(true)
     setError('')
 
@@ -74,7 +68,13 @@ export default function JobDetailPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [jobId])
+
+  useEffect(() => {
+    if (jobId) {
+      fetchJob()
+    }
+  }, [jobId, fetchJob])
 
   const toggleJobStatus = async () => {
     if (!job) return

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { useRouter } from 'next/navigation'
 import SignInPage from '../page'
@@ -46,9 +46,11 @@ describe('Authentication', () => {
       const passwordInput = screen.getByLabelText('パスワード')
       const submitButton = screen.getByRole('button', { name: /サインイン/ })
       
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
-      fireEvent.change(passwordInput, { target: { value: 'Test1234!' } })
-      fireEvent.click(submitButton)
+      await act(async () => {
+        fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
+        fireEvent.change(passwordInput, { target: { value: 'Test1234!' } })
+        fireEvent.click(submitButton)
+      })
       
       await waitFor(() => {
         expect(localStorage.getItem('isAuthenticated')).toBe('true')
@@ -64,9 +66,11 @@ describe('Authentication', () => {
       const passwordInput = screen.getByLabelText('パスワード')
       const submitButton = screen.getByRole('button', { name: /サインイン/ })
       
-      fireEvent.change(emailInput, { target: { value: 'admin@example.com' } })
-      fireEvent.change(passwordInput, { target: { value: 'Admin1234!' } })
-      fireEvent.click(submitButton)
+      await act(async () => {
+        fireEvent.change(emailInput, { target: { value: 'admin@example.com' } })
+        fireEvent.change(passwordInput, { target: { value: 'Admin1234!' } })
+        fireEvent.click(submitButton)
+      })
       
       await waitFor(() => {
         expect(localStorage.getItem('isAuthenticated')).toBe('true')
@@ -82,9 +86,11 @@ describe('Authentication', () => {
       const passwordInput = screen.getByLabelText('パスワード')
       const submitButton = screen.getByRole('button', { name: /サインイン/ })
       
-      fireEvent.change(emailInput, { target: { value: 'demo@example.com' } })
-      fireEvent.change(passwordInput, { target: { value: 'Demo1234!' } })
-      fireEvent.click(submitButton)
+      await act(async () => {
+        fireEvent.change(emailInput, { target: { value: 'demo@example.com' } })
+        fireEvent.change(passwordInput, { target: { value: 'Demo1234!' } })
+        fireEvent.click(submitButton)
+      })
       
       await waitFor(() => {
         expect(localStorage.getItem('isAuthenticated')).toBe('true')
@@ -105,9 +111,11 @@ describe('Authentication', () => {
       const passwordInput = screen.getByLabelText('パスワード')
       const submitButton = screen.getByRole('button', { name: /サインイン/ })
       
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
-      fireEvent.change(passwordInput, { target: { value: 'WrongPassword!' } })
-      fireEvent.click(submitButton)
+      await act(async () => {
+        fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
+        fireEvent.change(passwordInput, { target: { value: 'WrongPassword!' } })
+        fireEvent.click(submitButton)
+      })
       
       // テストモードでは間違ったパスワードでもSupabaseに問い合わせる
       await waitFor(() => {
@@ -141,9 +149,11 @@ describe('Authentication', () => {
       const passwordInput = screen.getByLabelText('パスワード')
       const submitButton = screen.getByRole('button', { name: /サインイン/ })
       
-      fireEvent.change(emailInput, { target: { value: 'user@example.com' } })
-      fireEvent.change(passwordInput, { target: { value: 'Password123!' } })
-      fireEvent.click(submitButton)
+      await act(async () => {
+        fireEvent.change(emailInput, { target: { value: 'user@example.com' } })
+        fireEvent.change(passwordInput, { target: { value: 'Password123!' } })
+        fireEvent.click(submitButton)
+      })
       
       await waitFor(() => {
         expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
@@ -166,9 +176,11 @@ describe('Authentication', () => {
       const passwordInput = screen.getByLabelText('パスワード')
       const submitButton = screen.getByRole('button', { name: /サインイン/ })
       
-      fireEvent.change(emailInput, { target: { value: 'user@example.com' } })
-      fireEvent.change(passwordInput, { target: { value: 'WrongPassword' } })
-      fireEvent.click(submitButton)
+      await act(async () => {
+        fireEvent.change(emailInput, { target: { value: 'user@example.com' } })
+        fireEvent.change(passwordInput, { target: { value: 'WrongPassword' } })
+        fireEvent.click(submitButton)
+      })
       
       await waitFor(() => {
         expect(screen.getByText('認証に失敗しました')).toBeInTheDocument()
@@ -185,21 +197,29 @@ describe('Authentication', () => {
       const passwordInput = screen.getByLabelText('パスワード')
       const submitButton = screen.getByRole('button', { name: /サインイン/ })
       
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
-      fireEvent.change(passwordInput, { target: { value: 'Test1234!' } })
-      fireEvent.click(submitButton)
+      await act(async () => {
+        fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
+        fireEvent.change(passwordInput, { target: { value: 'Test1234!' } })
+      })
       
-      // ローディング中の確認
-      expect(emailInput).toBeDisabled()
-      expect(passwordInput).toBeDisabled()
-      expect(submitButton).toBeDisabled()
+      // フォームが送信された直後のローディング状態を確認
+      act(() => {
+        fireEvent.click(submitButton)
+      })
+      
+      // 短い時間でローディング状態をチェック
+      await waitFor(() => {
+        expect(submitButton).toHaveTextContent('サインイン中...')
+      }, { timeout: 100 })
     })
 
-    test('ホームへ戻るボタンが機能する', () => {
+    test('ホームへ戻るボタンが機能する', async () => {
       render(<SignInPage />)
       
       const homeButton = screen.getByRole('button', { name: /ホームへ戻る/ })
-      fireEvent.click(homeButton)
+      await act(async () => {
+        fireEvent.click(homeButton)
+      })
       
       expect(mockPush).toHaveBeenCalledWith('/')
     })

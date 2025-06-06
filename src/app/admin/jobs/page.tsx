@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   Search, 
@@ -77,11 +77,7 @@ export default function AdminJobsPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalJobs, setTotalJobs] = useState(0)
 
-  useEffect(() => {
-    fetchJobs()
-  }, [currentPage, searchQuery, filterStatus])
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     setIsLoading(true)
     setError('')
 
@@ -124,7 +120,11 @@ export default function AdminJobsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [currentPage, searchQuery, filterStatus])
+
+  useEffect(() => {
+    fetchJobs()
+  }, [fetchJobs])
 
   const toggleJobStatus = async (jobId: string, currentStatus: boolean) => {
     try {
