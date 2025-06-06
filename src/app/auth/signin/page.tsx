@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,16 @@ export default function SignInPage() {
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // デバッグ: ページ読み込み時の環境変数確認
+  React.useEffect(() => {
+    console.log('🔧 サインインページ環境変数:', {
+      NODE_ENV: process.env.NODE_ENV,
+      NEXT_PUBLIC_DISABLE_AUTH: process.env.NEXT_PUBLIC_DISABLE_AUTH,
+      redirectTo,
+      searchParams: searchParams.toString()
+    })
+  }, [])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
