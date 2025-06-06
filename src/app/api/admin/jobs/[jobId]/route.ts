@@ -6,9 +6,9 @@ import { getErrorMessage } from '@/lib/utils'
 // 求人の詳細取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
-  const { jobId } = params
+  const { jobId } = await params
   
   if (!jobId) {
     return NextResponse.json(
@@ -62,9 +62,9 @@ export async function GET(
 // 求人の更新
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
-  const { jobId } = params
+  const { jobId } = await params
   
   if (!jobId) {
     return NextResponse.json(
@@ -146,9 +146,9 @@ export async function PATCH(
 // 求人の削除
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
-  const { jobId } = params
+  const { jobId } = await params
   
   if (!jobId) {
     return NextResponse.json(

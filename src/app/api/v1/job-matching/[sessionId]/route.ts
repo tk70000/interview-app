@@ -6,9 +6,9 @@ import { getErrorMessage } from '@/lib/utils'
 // 求人マッチングを実行
 export async function POST(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
-  const { sessionId } = params
+  const { sessionId } = await params
   
   if (!sessionId) {
     return NextResponse.json(
@@ -80,9 +80,9 @@ export async function POST(
 // マッチング結果を取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
-  const { sessionId } = params
+  const { sessionId } = await params
   
   if (!sessionId) {
     return NextResponse.json(

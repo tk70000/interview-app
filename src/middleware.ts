@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
   // レート制限のチェック
   if (pathname.startsWith('/api/')) {
     // IPアドレスまたはユーザーIDを識別子として使用
-    const identifier = request.ip || request.headers.get('x-forwarded-for') || 'anonymous'
+    const identifier = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'anonymous'
     
     // パスに応じたレート制限を適用
     let rateLimitConfig = RATE_LIMITS.api
