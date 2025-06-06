@@ -23,9 +23,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // ログインチェック（簡易版）
+    const isTestModeEnabled = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true'
     const isAuthenticated = localStorage.getItem('isAuthenticated')
-    if (!isAuthenticated) {
-      router.push('/auth/signin')
+    
+    if (!isTestModeEnabled && !isAuthenticated) {
+      router.push('/auth/signin?redirect=/dashboard')
       return
     }
     

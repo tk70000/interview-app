@@ -46,7 +46,7 @@ export default function SignInPage() {
         // 開発環境でテストアカウントの場合は、認証をスキップ
         localStorage.setItem('isAuthenticated', 'true')
         localStorage.setItem('userEmail', email)
-        router.push('/upload')
+        router.push(redirectTo)
         return
       }
 

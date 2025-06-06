@@ -23,6 +23,16 @@ export default function UploadPage() {
   useEffect(() => {
     // ユーザー情報を取得
     const checkAuth = async () => {
+      // テストモードが有効な場合は認証チェックをスキップ
+      const isTestModeEnabled = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true'
+      
+      if (isTestModeEnabled) {
+        // テストモードの場合はダミー情報を設定
+        setUserEmail('test@example.com')
+        setUserName('Test User')
+        return
+      }
+      
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
