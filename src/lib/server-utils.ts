@@ -121,6 +121,114 @@ export async function extractTextFromFileUpload(
   }
 }
 
+// 求人票専用のテキスト抽出関数
+export async function extractJobPostingText(
+  fileBuffer: Buffer, 
+  fileName: string, 
+  mimeType: string
+): Promise<string> {
+  try {
+    console.log('求人票テキスト抽出開始:', fileName, mimeType)
+    
+    const openai = getOpenAIClient()
+    
+    // ファイルをOpenAIにアップロード
+    const file = await openai.files.create({
+      file: new File([fileBuffer], fileName, { type: mimeType }),
+      purpose: 'assistants'
+    })
+    
+    console.log('ファイルアップロード完了:', file.id)
+    
+    // アシスタントを作成
+    const assistant = await openai.beta.assistants.create({
+      name: "Job Posting Text Extractor",
+      instructions: `あなたは求人票・求人情報の専門的な読み取りを行うエキスパートです。
+アップロードされた文書から、以下の求人情報を正確に抽出してください：
+
+1. 企業名・会社名
+2. 募集職種・ポジション名
+3. 職務内容・業務内容の詳細
+4. 応募要件・必須スキル・歓迎スキル
+5. 雇用形態（正社員、契約社員等）
+6. 勤務地・勤務条件
+7. 給与・年収レンジ
+8. 福利厚生・その他条件
+
+出力形式：
+- 元の文書の構造と階層を保持
+- 読みにくい部分は [判読困難] と記載
+- 表形式のデータは適切にフォーマット
+- 求人情報として自然な文章に整形`,
+      model: "gpt-4o-mini",
+      tools: [{ type: "file_search" }]
+    })
+    
+    try {
+      // スレッドを作成
+      const thread = await openai.beta.threads.create({
+        messages: [
+          {
+            role: "user",
+            content: "この求人票・求人情報からすべてのテキスト情報を抽出してください。レイアウトや表の構造も考慮して、求人情報として読みやすい形式で出力してください。",
+            attachments: [
+              {
+                file_id: file.id,
+                tools: [{ type: "file_search" }]
+              }
+            ]
+          }
+        ]
+      })
+      
+      // 実行
+      const run = await openai.beta.threads.runs.create(thread.id, {
+        assistant_id: assistant.id
+      })
+      
+      // 完了まで待機
+      let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id)
+      while (runStatus.status === 'queued' || runStatus.status === 'in_progress') {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id)
+      }
+      
+      if (runStatus.status !== 'completed') {
+        throw new Error(`アシスタント実行が失敗しました: ${runStatus.status}`)
+      }
+      
+      // レスポンスを取得
+      const messages = await openai.beta.threads.messages.list(thread.id)
+      const extractedText = messages.data[0]?.content[0]?.type === 'text' 
+        ? messages.data[0].content[0].text.value 
+        : ''
+      
+      console.log('抽出されたテキスト文字数:', extractedText.length)
+      console.log('抽出されたテキストの最初の200文字:', extractedText.substring(0, 200))
+      
+      if (!extractedText || extractedText.length < 50) {
+        throw new Error('ファイルから十分なテキストを抽出できませんでした。')
+      }
+      
+      return extractedText
+      
+    } finally {
+      // クリーンアップ
+      try {
+        await openai.beta.assistants.del(assistant.id)
+        await openai.files.del(file.id)
+        console.log('リソースをクリーンアップしました')
+      } catch (deleteError) {
+        console.warn('クリーンアップに失敗:', deleteError)
+      }
+    }
+    
+  } catch (error) {
+    console.error('求人票テキスト抽出エラー:', error)
+    throw new Error(`求人票からのテキスト抽出に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
+
 // LinkedIn JSONからテキスト抽出
 export async function extractTextFromLinkedInJSON(fileUrl: string): Promise<string> {
   try {

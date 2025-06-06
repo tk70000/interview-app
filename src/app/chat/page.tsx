@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChatInterface } from '@/components/chat-interface'
 import { InterviewSchedulerModal } from '@/components/interview-scheduler-modal'
+import { JobRecommendations } from '@/components/job-recommendations'
 import { Message, ChatStreamEvent } from '@/types'
 import { getErrorMessage, generateId } from '@/lib/utils'
 import { withErrorBoundary } from '@/components/error-boundary'
@@ -25,6 +26,7 @@ function ChatPage() {
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false)
   const [candidateName, setCandidateName] = useState('')
   const [candidateEmail, setCandidateEmail] = useState('')
+  const [showJobRecommendations, setShowJobRecommendations] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
   const streamingContentRef = useRef<string>('')
 
@@ -183,7 +185,25 @@ function ChatPage() {
     setError('')
 
     try {
-      // メッセージ履歴からキャリアサマリーを生成
+      console.log('現在のセッションID:', sessionId)
+      
+      // セッションのチャット要約を生成
+      const summarizeResponse = await fetch(`/api/v1/chat/${sessionId}/summarize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!summarizeResponse.ok) {
+        const errorData = await summarizeResponse.json()
+        console.error('要約API エラー:', errorData)
+        throw new Error(`要約の生成に失敗しました: ${errorData.error || '不明なエラー'}`)
+      }
+
+      const summarizeData = await summarizeResponse.json()
+      
+      // 既存のサマリー生成APIも呼び出す（表示用）
       const response = await fetch('/api/v1/chat/summary', {
         method: 'POST',
         headers: {
@@ -202,6 +222,28 @@ function ChatPage() {
       const data = await response.json()
       setSummary(data.summary)
       setShowSummary(true)
+      
+      // 求人マッチングを実行
+      const matchingResponse = await fetch(`/api/v1/job-matching/${sessionId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          matchCount: 10,
+          minSimilarity: 0.6,
+          includeExplanations: true
+        }),
+      })
+      
+      if (matchingResponse.ok) {
+        const matchingData = await matchingResponse.json()
+        console.log('求人マッチング完了:', matchingData)
+        // マッチング結果がある場合は求人推薦を表示
+        if (matchingData.matches && matchingData.matches.length > 0) {
+          setShowJobRecommendations(true)
+        }
+      }
     } catch (error) {
       setError('キャリアサマリーの生成に失敗しました')
     } finally {
@@ -255,11 +297,19 @@ function ChatPage() {
                 これまでの会話から、あなたのキャリアの方向性をまとめました
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="prose prose-sm max-w-none">
                 <div className="whitespace-pre-wrap">{summary}</div>
               </div>
-              <div className="flex gap-2 pt-4">
+              
+              {/* 求人推薦セクション */}
+              {showJobRecommendations && sessionId && (
+                <div className="border-t pt-6">
+                  <JobRecommendations sessionId={sessionId} />
+                </div>
+              )}
+              
+              <div className="flex gap-2 pt-4 border-t">
                 <Button onClick={() => router.push('/')}>
                   ホームへ戻る
                 </Button>
