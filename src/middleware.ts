@@ -41,6 +41,11 @@ export async function middleware(request: NextRequest) {
     console.log('🧪 TEST MODE: 認証チェックが無効化されています')
   }
   
+  // デバッグ: すべてのリクエストをログ
+  if (pathname !== '/favicon.ico' && !pathname.startsWith('/_next/')) {
+    console.log('🌐 ミドルウェア:', { pathname, query: request.nextUrl.searchParams.toString() })
+  }
+  
   // レート制限のチェック
   if (pathname.startsWith('/api/')) {
     // IPアドレスまたはユーザーIDを識別子として使用

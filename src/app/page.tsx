@@ -30,6 +30,16 @@ export default function HomePage() {
   }
 
   useEffect(() => {
+    // デバッグ: ホームページアクセス時の状態をログ
+    const urlParams = new URLSearchParams(window.location.search)
+    const redirectParam = urlParams.get('redirect')
+    console.log('🏠 ホームページ読み込み', { 
+      location: window.location.href,
+      redirect: redirectParam,
+      isAuthenticated: localStorage.getItem('isAuthenticated'),
+      isDemoMode: localStorage.getItem('isDemoMode')
+    })
+    
     // デモモードの状態を確認
     setIsDemoMode(localStorage.getItem('isDemoMode') === 'true')
   }, [])

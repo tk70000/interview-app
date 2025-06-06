@@ -26,6 +26,8 @@ export default function SignInPage() {
     setIsLoading(true)
     setError('')
 
+    console.log('🔍 サインイン開始', { email, redirectTo, searchParams: searchParams.toString() })
+
     try {
       // 開発環境用のテストアカウント
       const testAccounts = [
@@ -41,11 +43,18 @@ export default function SignInPage() {
 
       // DISABLE_AUTHが有効な場合のみテストアカウントを許可
       const isTestModeEnabled = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true'
+      console.log('🔧 環境変数チェック', { 
+        NODE_ENV: process.env.NODE_ENV,
+        NEXT_PUBLIC_DISABLE_AUTH: process.env.NEXT_PUBLIC_DISABLE_AUTH,
+        isTestModeEnabled 
+      })
       
       if (isTestModeEnabled && isTestAccount) {
         // 開発環境でテストアカウントの場合は、認証をスキップ
+        console.log('🧪 テストアカウントでサインイン', { redirectTo })
         localStorage.setItem('isAuthenticated', 'true')
         localStorage.setItem('userEmail', email)
+        console.log('🚀 リダイレクト先:', redirectTo)
         router.push(redirectTo)
         return
       }
@@ -59,6 +68,7 @@ export default function SignInPage() {
       if (error) throw error
 
       // サインイン成功後、指定されたページまたはアップロードページへリダイレクト
+      console.log('✅ Supabase認証成功、リダイレクト先:', redirectTo)
       router.push(redirectTo)
     } catch (error: any) {
       setError(error.message || 'サインインに失敗しました')
