@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, RefreshCw, Search, Download, MessageSquare, Users, Settings } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Search, Download, MessageSquare, Users, Settings, Briefcase } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -111,7 +111,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 管理機能メニュー */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push('/admin/chats')}>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center text-lg">
@@ -125,6 +125,23 @@ export default function DashboardPage() {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 全てのユーザーセッションとチャット履歴の管理
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push('/admin/jobs')}>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-lg">
+                <Briefcase className="mr-2 h-5 w-5 text-orange-600" />
+                求人管理
+              </CardTitle>
+              <CardDescription>
+                求人情報の登録・編集・管理
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                求人データのインポート・編集・アクティブ状態管理
               </p>
             </CardContent>
           </Card>

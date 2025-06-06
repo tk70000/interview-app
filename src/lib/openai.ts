@@ -3,7 +3,7 @@ import OpenAI from 'openai'
 // OpenAIクライアントの遅延初期化
 let openai: OpenAI | null = null
 
-function getOpenAIClient(): OpenAI {
+export function getOpenAIClient(): OpenAI {
   if (!openai) {
     const apiKey = process.env.OPENAI_API_KEY
     
