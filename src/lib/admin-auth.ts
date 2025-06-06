@@ -23,12 +23,12 @@ export function verifyAdminSecret(request: NextRequest): boolean {
 export function isAuthorizedAdmin(email?: string, adminSecret?: string): boolean {
   const env = getEnv()
   
-  // 開発環境では緩い認証
-  if (env.NODE_ENV === 'development') {
+  // 開発環境では緩い認証（DISABLE_AUTHが有効な場合のみ）
+  if (env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true') {
     return true
   }
   
-  // 本番環境では厳密な認証
+  // 厳密な認証
   if (adminSecret && env.ADMIN_SECRET && adminSecret === env.ADMIN_SECRET) {
     return true
   }
@@ -52,8 +52,8 @@ export function checkAdminAuth(request: NextRequest, userEmail?: string): AdminA
   const env = getEnv()
   const adminSecret = request.headers.get('x-admin-secret')
   
-  // 開発環境
-  if (env.NODE_ENV === 'development') {
+  // 開発環境（DISABLE_AUTHが有効な場合のみ）
+  if (env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true') {
     return { isAdmin: true, method: 'dev', email: userEmail }
   }
   

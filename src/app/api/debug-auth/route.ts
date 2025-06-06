@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, getServiceSupabase } from '@/lib/supabase-server';
+import { productionGuard } from '@/lib/debug-guard';
 
 export async function GET(request: NextRequest) {
+  // 本番環境でのアクセスを制限
+  const guard = productionGuard()
+  if (guard) return guard
   const isTestMode = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
   
   let authInfo: any = {

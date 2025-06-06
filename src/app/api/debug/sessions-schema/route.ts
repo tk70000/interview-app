@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServiceSupabase } from '@/lib/supabase-server'
+import { productionGuard } from '@/lib/debug-guard'
+import { debugLog } from '@/lib/debug-logger'
 
 export async function GET(request: NextRequest) {
+  // 本番環境でのアクセスを制限
+  const guard = productionGuard()
+  if (guard) return guard
+  
   try {
     const supabase = getServiceSupabase()
     
@@ -38,7 +44,7 @@ export async function GET(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error('スキーマ確認エラー:', error)
+    debugLog.error('スキーマ確認エラー:', error)
     return NextResponse.json(
       { error: `スキーマの確認に失敗しました: ${error}` },
       { status: 500 }

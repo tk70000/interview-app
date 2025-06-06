@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServiceSupabase } from '@/lib/supabase-server'
+import { productionGuard } from '@/lib/debug-guard'
 
 // メッセージの改行文字を診断
 export async function GET(request: NextRequest) {
+  // 本番環境でのアクセスを制限
+  const guard = productionGuard()
+  if (guard) return guard
+  
   try {
     const { searchParams } = new URL(request.url)
     const sessionId = searchParams.get('sessionId')

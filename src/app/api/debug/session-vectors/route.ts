@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServiceSupabase } from '@/lib/supabase-server'
+import { productionGuard } from '@/lib/debug-guard'
+import { debugLog } from '@/lib/debug-logger'
 
 export async function GET(request: NextRequest) {
+  // 本番環境でのアクセスを制限
+  const guard = productionGuard()
+  if (guard) return guard
+  
   try {
     const supabase = getServiceSupabase()
     const { searchParams } = new URL(request.url)
@@ -11,7 +17,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'sessionId parameter is required' }, { status: 400 })
     }
     
-    console.log('セッションベクトル調査開始:', sessionId)
+    debugLog.log('セッションベクトル調査開始:', sessionId)
     
     // 1. セッション情報を取得
     const { data: session, error: sessionError } = await supabase
@@ -39,7 +45,7 @@ export async function GET(request: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('session_id', sessionId)
     
-    console.log('セッションベクトル調査結果:', {
+    debugLog.log('セッションベクトル調査結果:', {
       sessionFound: !!session,
       candidateFound: !!candidate,
       messageCount,
@@ -82,7 +88,7 @@ export async function GET(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error('セッションベクトル調査エラー:', error)
+    debugLog.error('セッションベクトル調査エラー:', error)
     return NextResponse.json(
       { error: `セッションベクトルの調査に失敗しました: ${error}` },
       { status: 500 }

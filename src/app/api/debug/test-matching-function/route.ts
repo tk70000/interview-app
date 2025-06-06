@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServiceSupabase } from '@/lib/supabase-server'
+import { productionGuard } from '@/lib/debug-guard'
+import { debugLog } from '@/lib/debug-logger'
 
 export async function GET(request: NextRequest) {
+  // 本番環境でのアクセスを制限
+  const guard = productionGuard()
+  if (guard) return guard
+  
   try {
     const supabase = getServiceSupabase()
     const { searchParams } = new URL(request.url)
     const sessionId = searchParams.get('sessionId') || 'bac954bc-ed96-4a2b-a972-c456d659f358'
     const candidateId = searchParams.get('candidateId') || 'ea5074b1-ad9a-4215-a533-bd8058f88556'
     
-    console.log('PostgreSQL関数テスト開始:', { sessionId, candidateId })
+    debugLog.log('PostgreSQL関数テスト開始:', { sessionId, candidateId })
     
     // 1. 関数をさまざまなパラメータでテスト
     const tests = []
@@ -147,7 +153,7 @@ export async function GET(request: NextRequest) {
       })
     }
     
-    console.log('PostgreSQL関数テスト結果:', tests)
+    debugLog.log('PostgreSQL関数テスト結果:', tests)
     
     return NextResponse.json({
       success: true,
@@ -161,7 +167,7 @@ export async function GET(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error('関数テストエラー:', error)
+    debugLog.error('関数テストエラー:', error)
     return NextResponse.json(
       { error: `関数テストに失敗しました: ${error}` },
       { status: 500 }

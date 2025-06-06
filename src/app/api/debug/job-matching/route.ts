@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServiceSupabase } from '@/lib/supabase-server'
+import { productionGuard } from '@/lib/debug-guard'
+import { debugLog } from '@/lib/debug-logger'
 
 export async function GET(request: NextRequest) {
+  // 本番環境でのアクセスを制限
+  const guard = productionGuard()
+  if (guard) return guard
+  
   try {
     const supabase = getServiceSupabase()
     const { searchParams } = new URL(request.url)
     const sessionId = searchParams.get('sessionId')
     
-    console.log('デバッグ: 求人マッチング診断開始', { sessionId })
+    debugLog.log('デバッグ: 求人マッチング診断開始', { sessionId })
     
     // 1. セッション情報を確認
     const { data: session, error: sessionError } = await supabase
@@ -16,7 +22,7 @@ export async function GET(request: NextRequest) {
       .eq('id', sessionId)
       .single()
     
-    console.log('デバッグ: セッション情報', { session, sessionError })
+    debugLog.log('デバッグ: セッション情報', { session, sessionError })
     
     // 2. 候補者情報を確認
     let candidate = null
@@ -31,7 +37,7 @@ export async function GET(request: NextRequest) {
       candidateError = result.error
     }
     
-    console.log('デバッグ: 候補者情報', { candidate, candidateError })
+    debugLog.log('デバッグ: 候補者情報', { candidate, candidateError })
     
     // 3. 求人データの件数を確認
     const { count: jobCount, error: jobCountError } = await supabase
@@ -39,7 +45,7 @@ export async function GET(request: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('is_active', true)
     
-    console.log('デバッグ: 求人データ件数', { jobCount, jobCountError })
+    debugLog.log('デバッグ: 求人データ件数', { jobCount, jobCountError })
     
     // 4. PostgreSQL関数の存在確認
     let functionExists = false
@@ -53,17 +59,17 @@ export async function GET(request: NextRequest) {
         })
       functionExists = !testError
       functionError = testError
-      console.log('デバッグ: 関数テスト結果', { testResult, testError })
+      debugLog.log('デバッグ: 関数テスト結果', { testResult, testError })
     } catch (e) {
       functionError = e
-      console.log('デバッグ: 関数テスト例外', e)
+      debugLog.log('デバッグ: 関数テスト例外', e)
     }
     
     // 5. ベクトルデータの確認
     const hasProfileEmbedding = candidate?.profile_embedding != null
     const hasChatEmbedding = session?.chat_embedding != null
     
-    console.log('デバッグ: ベクトルデータ', {
+    debugLog.log('デバッグ: ベクトルデータ', {
       hasProfileEmbedding,
       hasChatEmbedding,
       profileEmbeddingLength: candidate?.profile_embedding?.length,
@@ -82,7 +88,7 @@ export async function GET(request: NextRequest) {
       
       simpleJobQuery = jobs
       simpleJobError = jobsError
-      console.log('デバッグ: 簡単な求人検索', { 
+      debugLog.log('デバッグ: 簡単な求人検索', { 
         jobsCount: jobs?.length, 
         jobsError,
         sampleJobs: jobs?.map(j => ({ 
@@ -94,7 +100,7 @@ export async function GET(request: NextRequest) {
       })
     } catch (e) {
       simpleJobError = e
-      console.log('デバッグ: 求人検索例外', e)
+      debugLog.log('デバッグ: 求人検索例外', e)
     }
     
     return NextResponse.json({
@@ -135,7 +141,7 @@ export async function GET(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error('求人マッチングデバッグエラー:', error)
+    debugLog.error('求人マッチングデバッグエラー:', error)
     return NextResponse.json(
       { error: `診断に失敗しました: ${error}` },
       { status: 500 }

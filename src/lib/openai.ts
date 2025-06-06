@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { debugLog } from './debug-logger'
 
 // OpenAIクライアントの遅延初期化
 let openai: OpenAI | null = null
@@ -8,18 +9,18 @@ export function getOpenAIClient(): OpenAI {
     const apiKey = process.env.OPENAI_API_KEY
     
     if (!apiKey) {
-      console.error('⚠️ OpenAI API key is not set. Please check your .env.local file.')
+      debugLog.error('⚠️ OpenAI API key is not set. Please check your .env.local file.')
       throw new Error('OpenAI APIキーが設定されていません。.env.localファイルを確認してください。')
     }
     
     // Validate API key format
     const trimmedKey = apiKey.trim()
     if (trimmedKey !== apiKey) {
-      console.warn('⚠️ OpenAI API key has leading/trailing whitespace')
+      debugLog.warn('⚠️ OpenAI API key has leading/trailing whitespace')
     }
     
     if (!trimmedKey.startsWith('sk-')) {
-      console.error('⚠️ OpenAI API key should start with "sk-"')
+      debugLog.error('⚠️ OpenAI API key should start with "sk-"')
       throw new Error('OpenAI APIキーの形式が正しくありません。')
     }
     
@@ -34,12 +35,12 @@ export function getOpenAIClient(): OpenAI {
 // CV要約生成
 export async function generateCVSummary(cvText: string): Promise<string> {
   try {
-    console.log('Generating CV summary...');
-    console.log('OpenAI API key exists:', !!process.env.OPENAI_API_KEY);
-    console.log('CV text length:', cvText.length);
+    debugLog.log('Generating CV summary...');
+    debugLog.log('OpenAI API key exists:', !!process.env.OPENAI_API_KEY);
+    debugLog.log('CV text length:', cvText.length);
     
     const client = getOpenAIClient();
-    console.log('OpenAI client created successfully');
+    debugLog.log('OpenAI client created successfully');
     
     const response = await client.chat.completions.create({
       model: 'gpt-4o-mini', // 一時的に安価なモデルを使用
@@ -62,10 +63,10 @@ export async function generateCVSummary(cvText: string): Promise<string> {
       throw new Error('OpenAI APIからの応答が空です');
     }
     
-    console.log('生成されたCV要約:', content);
+    debugLog.log('生成されたCV要約:', content);
     return content;
   } catch (error: any) {
-    console.error('CV要約生成エラー詳細:', {
+    debugLog.error('CV要約生成エラー詳細:', {
       message: error.message,
       status: error.response?.status,
       statusText: error.response?.statusText,
@@ -104,10 +105,10 @@ export async function generateInitialQuestions(
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log('=== generateInitialQuestions ===')
-      console.log(`試行 ${attempt}/${maxRetries}`)
-      console.log('入力されたCV要約:', cvSummary)
-      console.log('職種指定:', jobDescription || '指定なし')
+      debugLog.log('=== generateInitialQuestions ===')
+      debugLog.log(`試行 ${attempt}/${maxRetries}`)
+      debugLog.log('入力されたCV要約:', cvSummary)
+      debugLog.log('職種指定:', jobDescription || '指定なし')
       
       const response = await getOpenAIClient().chat.completions.create({
       model: 'gpt-4o-mini', // 一時的に安価なモデルを使用
@@ -155,7 +156,7 @@ ${cvSummary.includes('読み込むことができませんでした')
     })
 
     const content = response.choices[0].message.content || ''
-    console.log('OpenAIからの生の回答:', content)
+    debugLog.log('OpenAIからの生の回答:', content)
     
     // 質問を番号付きリストから抽出
     const questions = content
@@ -165,10 +166,10 @@ ${cvSummary.includes('読み込むことができませんでした')
       .map(line => line.replace(/^\d+\.\s*/, '').trim()) // 番号を除去
       .filter(q => q.length > 10) // 10文字以上の質問のみ
 
-      console.log('解析後の質問配列:', questions)
+      debugLog.log('解析後の質問配列:', questions)
       
       if (questions.length === 0) {
-        console.warn('質問が抽出できませんでした。元のレスポンス:', content)
+        debugLog.warn('質問が抽出できませんでした。元のレスポンス:', content)
         // フォールバック用の質問
         return [
           '現在のお仕事では、どのような業務を担当していますか？',
@@ -182,7 +183,7 @@ ${cvSummary.includes('読み込むことができませんでした')
       return questions.slice(0, 7)
     } catch (error: any) {
       lastError = error
-      console.error(`初回質問生成エラー (試行 ${attempt}/${maxRetries}):`, {
+      debugLog.error(`初回質問生成エラー (試行 ${attempt}/${maxRetries}):`, {
         message: error.message,
         status: error.status,
         statusText: error.response?.statusText,
@@ -196,7 +197,7 @@ ${cvSummary.includes('読み込むことができませんでした')
       // レート制限エラーの場合はリトライ
       if (error.status === 429 && attempt < maxRetries) {
         const waitTime = Math.pow(2, attempt) * 1000 // 指数バックオフ: 2秒, 4秒, 8秒
-        console.log(`レート制限エラー。${waitTime}ms待機して再試行します...`)
+        debugLog.log(`レート制限エラー。${waitTime}ms待機して再試行します...`)
         await new Promise(resolve => setTimeout(resolve, waitTime))
         continue
       }
@@ -258,13 +259,13 @@ export async function generateFollowUpQuestion(
     const content = response.choices[0].message.content || ''
     
     // デバッグ: OpenAIからの生の応答を確認
-    console.log('=== OpenAI Response Debug ===')
-    console.log('Response length:', content.length)
-    console.log('Contains newlines:', content.includes('\n'))
-    console.log('Line count:', content.split('\n').length)
-    console.log('First 200 chars:', content.substring(0, 200))
-    console.log('Full content:', JSON.stringify(content))
-    console.log('=============================')
+    debugLog.log('=== OpenAI Response Debug ===')
+    debugLog.log('Response length:', content.length)
+    debugLog.log('Contains newlines:', content.includes('\n'))
+    debugLog.log('Line count:', content.split('\n').length)
+    debugLog.log('First 200 chars:', content.substring(0, 200))
+    debugLog.log('Full content:', JSON.stringify(content))
+    debugLog.log('=============================')
     
     if (content.includes('NO_FOLLOW_UP')) {
       return { question: '', shouldAskFollowUp: false }
@@ -272,7 +273,7 @@ export async function generateFollowUpQuestion(
 
     return { question: content, shouldAskFollowUp: true }
   } catch (error) {
-    console.error('フォローアップ質問生成エラー:', error)
+    debugLog.error('フォローアップ質問生成エラー:', error)
     return { question: '', shouldAskFollowUp: false }
   }
 }
@@ -287,7 +288,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
     return response.data[0].embedding
   } catch (error) {
-    console.error('埋め込み生成エラー:', error)
+    debugLog.error('埋め込み生成エラー:', error)
     throw new Error('埋め込みベクトルの生成に失敗しました')
   }
 }
@@ -320,7 +321,7 @@ export async function* streamChatResponse(
       }
     }
   } catch (error) {
-    console.error('ストリーミング応答エラー:', error)
+    debugLog.error('ストリーミング応答エラー:', error)
     throw new Error('応答の生成に失敗しました')
   }
 }

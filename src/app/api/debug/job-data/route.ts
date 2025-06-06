@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServiceSupabase } from '@/lib/supabase-server'
+import { productionGuard } from '@/lib/debug-guard'
+import { debugLog } from '@/lib/debug-logger'
 
 export async function GET(request: NextRequest) {
+  // 本番環境でのアクセスを制限
+  const guard = productionGuard()
+  if (guard) return guard
+
   try {
     const supabase = getServiceSupabase()
     
-    console.log('求人データ調査開始')
+    debugLog.log('求人データ調査開始')
     
     // 1. 全求人数をチェック
     const { count: totalJobs, error: totalError } = await supabase
@@ -39,7 +45,7 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(3)
     
-    console.log('求人データ調査結果:', {
+    debugLog.log('求人データ調査結果:', {
       totalJobs,
       activeJobs,
       vectorJobs,
@@ -82,7 +88,7 @@ export async function GET(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error('求人データ調査エラー:', error)
+    debugLog.error('求人データ調査エラー:', error)
     return NextResponse.json(
       { error: `求人データの調査に失敗しました: ${error}` },
       { status: 500 }
